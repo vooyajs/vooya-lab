@@ -1,0 +1,8 @@
+{
+  "category": "bundlers",
+  "slug": "rolldown",
+  "title": "Rolldown Browser",
+  "status": "experimental",
+  "vooyaComponent": "./src/RolldownSummary.rs",
+  "runner": "./src/rolldown.worker.ts"
+}

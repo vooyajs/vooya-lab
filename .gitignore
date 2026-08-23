@@ -1,0 +1,7 @@
+node_modules
+dist
+.vooya
+playwright-report
+test-results
+.DS_Store
+.playwright-cli

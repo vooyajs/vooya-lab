@@ -1,0 +1,22 @@
+.vooya-summary {
+  border: 1px solid #304352;
+  border-radius: 14px;
+  background: #101b25;
+  padding: 18px;
+  margin-top: 24px;
+}
+
+.vooya-summary .summary-label {
+  color: #76e3ba;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.vooya-summary pre {
+  color: #a5b2bf;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}

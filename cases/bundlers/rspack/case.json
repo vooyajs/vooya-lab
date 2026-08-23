@@ -1,0 +1,8 @@
+{
+  "category": "bundlers",
+  "slug": "rspack",
+  "title": "Rspack Browser",
+  "status": "experimental",
+  "vooyaComponent": "./src/RspackSummary.rs",
+  "runner": "./src/rspack.worker.ts"
+}
