@@ -57,3 +57,16 @@ the cross-origin isolation headers required by either browser bundler, so both
 cases may remain in their explicit `needs-isolation` state there. A
 headers-capable static host can serve the same `dist` output for the full
 Rspack and Rolldown paths.
+
+## Large WASM assets
+
+Cloudflare Pages has a per-file upload limit, so the larger Rspack binary lives
+outside `dist`. `workers/wasm-assets` is a private-R2 gateway with CORS and
+cross-origin resource headers, a path allowlist, a conservative per-IP request
+window, and an `ASSETS_ENABLED` kill switch. The Rspack Worker uses
+`VITE_RSPACK_WASM_URL` when set and otherwise falls back to the package-local
+WASM file for local development.
+
+For a Pages upload, set `VITE_RSPACK_WASM_URL` to the deployed Worker URL and
+run `pnpm build:pages`. The final command removes only the generated Rspack
+binary from `dist/assets`; Rolldown, Vooya, and the application remain in Pages.

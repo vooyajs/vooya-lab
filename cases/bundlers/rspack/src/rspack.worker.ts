@@ -5,6 +5,10 @@ type BuildRequest = {
 
 self.onmessage = async (event: MessageEvent<BuildRequest>) => {
   try {
+    const wasmUrl = import.meta.env.VITE_RSPACK_WASM_URL;
+    if (wasmUrl) {
+      (globalThis as typeof globalThis & { RSPACK_WASM_URL?: string }).RSPACK_WASM_URL = wasmUrl;
+    }
     const { rspack, builtinMemFs } = await import("@rspack/browser");
     const request = event.data;
     builtinMemFs.volume.reset();

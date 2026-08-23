@@ -7,7 +7,13 @@
   "scripts": {
     "dev": "pnpm --filter @vooya-lab/web dev",
     "build": "pnpm --filter @vooya-lab/web build",
+    "build:pages": "pnpm build && node scripts/prepare-pages.mjs",
     "typecheck": "pnpm --filter @vooya-lab/web typecheck",
-    "test:e2e": "pnpm --filter @vooya-lab/web test:e2e"
+    "test:e2e": "pnpm --filter @vooya-lab/web test:e2e",
+    "wasm-assets:dev": "pnpm exec wrangler dev --config workers/wasm-assets/wrangler.jsonc",
+    "wasm-assets:deploy": "pnpm exec wrangler deploy --config workers/wasm-assets/wrangler.jsonc"
+  },
+  "devDependencies": {
+    "wrangler": "^4.125.0"
   }
 }

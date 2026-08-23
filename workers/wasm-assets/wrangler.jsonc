@@ -1,0 +1,14 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "vooya-lab-wasm-assets",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-24",
+  "vars": {
+    "ASSETS_ENABLED": "false",
+    "ALLOWED_ORIGIN": "https://vooya-lab.pages.dev",
+    "RATE_LIMIT_PER_MINUTE": "30"
+  },
+  "r2_buckets": [
+    { "binding": "WASM_ASSETS", "bucket_name": "vooya-lab-assets" }
+  ]
+}
