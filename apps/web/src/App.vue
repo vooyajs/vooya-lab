@@ -7,6 +7,7 @@ import { RouterLink, RouterView } from "vue-router";
     <header class="topbar">
       <RouterLink class="brand" to="/">Vooya <span>Lab</span></RouterLink>
       <nav class="topnav" aria-label="Main navigation">
+        <RouterLink to="/">Overview</RouterLink>
         <RouterLink to="/bundlers">Bundlers</RouterLink>
       </nav>
     </header>

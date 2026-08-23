@@ -16,6 +16,7 @@ export default defineConfig({
       rust: {
         entry: "cases/lib.rs",
         sourceRoot: "cases",
+        webSysFeatures: ["CanvasRenderingContext2d", "HtmlCanvasElement"],
       },
     }),
   ],
@@ -37,6 +38,13 @@ export default defineConfig({
     headers: {
       "Cross-Origin-Opener-Policy": "same-origin",
       "Cross-Origin-Embedder-Policy": "require-corp",
+    },
+    // Vooya writes its generated Rust/WASM bindings into .vooya during the
+    // build. Watching those outputs creates a compile -> HMR -> compile loop
+    // in dev; source files remain watched and the plugin still sends the
+    // single reload after a successful Rust build.
+    watch: {
+      ignored: ["**/.vooya/**", "**/.wrangler/**"],
     },
   },
   preview: {

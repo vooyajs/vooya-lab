@@ -5,3 +5,6 @@ pub mod rspack_summary;
 
 #[path = "bundlers/rolldown/src/RolldownSummary.rs"]
 pub mod rolldown_summary;
+
+#[path = "examples/scatter-plot/src/ScatterPlot.rs"]
+pub mod scatter_plot;

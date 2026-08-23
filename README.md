@@ -5,6 +5,12 @@ precompiled artifacts, and browser-hosted tooling. It is intentionally separate
 from the Vooya compiler repository: the compiler owns the authoring contract;
 the lab owns cross-scenario evidence and interactive demos.
 
+## Related resources
+
+- [Vooya documentation](https://github.com/vooyajs/vooya/tree/main/docs) — authoring contracts, Rust-file guidance, and compatibility boundaries;
+- [Open the hosted lab](https://vooya-lab.pages.dev/) — interactive browser cases and live integration evidence;
+- [Vooya Lab source](https://github.com/vooyajs/vooya-lab) — case implementations and deployment configuration.
+
 Every case in this repository must include a Rust component or store compiled
 through Vooya before it is considered complete. External browser WASM packages
 such as `@rspack/browser` and `@rolldown/browser` are dependencies exercised by

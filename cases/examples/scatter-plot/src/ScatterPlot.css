@@ -1,0 +1,29 @@
+.rust-scatter {
+  background: #081119;
+}
+
+.scatter-toolbar {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.scatter-toolbar strong {
+  color: #d6e6ed;
+  font-size: .72rem;
+}
+
+.scatter-toolbar span {
+  color: #718894;
+  font: .68rem ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+[data-scatter-canvas] {
+  border-top: 1px solid #1e303c;
+  display: block;
+  height: auto;
+  max-width: 100%;
+  width: 100%;
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "../../case.schema.json",
+  "category": "examples",
+  "slug": "scatter-plot",
+  "title": "Scatter plot",
+  "status": "live",
+  "vooyaComponent": "./src/ScatterPlot.rs",
+  "host": "apps/web/src/components/RenderCaseStage.vue",
+  "interactions": ["change point count", "zoom", "reset zoom"],
+  "reference": "https://github.com/vooyajs/vooya/blob/main/docs/guide/scatter-plot.md",
+  "evidence": ["Rust-file component compiled by the lab Vooya entry", "canvas renders the selected point count"]
+}

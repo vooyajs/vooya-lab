@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Vooya Lab case",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["category", "slug", "title", "status", "vooyaComponent", "interactions"],
+  "properties": {
+    "category": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "slug": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "title": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["live", "experimental", "catalogued", "planned"] },
+    "vooyaComponent": { "type": "string", "pattern": "^\\./src/[^/]+\\.rs$" },
+    "runner": { "type": "string" },
+    "host": { "type": "string" },
+    "interactions": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "reference": { "type": "string", "format": "uri-reference" },
+    "evidence": { "type": "array", "items": { "type": "string" } }
+  }
+}

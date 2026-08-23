@@ -1,8 +1,10 @@
 {
+  "$schema": "../../case.schema.json",
   "category": "bundlers",
   "slug": "rolldown",
   "title": "Rolldown Browser",
   "status": "experimental",
   "vooyaComponent": "./src/RolldownSummary.rs",
-  "runner": "./src/rolldown.worker.ts"
+  "runner": "./src/rolldown.worker.ts",
+  "interactions": ["edit source", "run browser build", "inspect emitted files"]
 }

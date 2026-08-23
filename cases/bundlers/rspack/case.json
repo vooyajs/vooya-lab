@@ -1,8 +1,10 @@
 {
+  "$schema": "../../case.schema.json",
   "category": "bundlers",
   "slug": "rspack",
   "title": "Rspack Browser",
   "status": "experimental",
   "vooyaComponent": "./src/RspackSummary.rs",
-  "runner": "./src/rspack.worker.ts"
+  "runner": "./src/rspack.worker.ts",
+  "interactions": ["edit source", "run browser build", "inspect emitted files"]
 }

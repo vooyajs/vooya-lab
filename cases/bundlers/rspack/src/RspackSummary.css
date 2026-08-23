@@ -3,7 +3,7 @@
   border-radius: 14px;
   background: #101b25;
   padding: 18px;
-  margin-top: 24px;
+  margin-top: 18px;
 }
 
 .vooya-summary .summary-label {
@@ -12,11 +12,4 @@
   font-weight: 800;
   letter-spacing: .12em;
   text-transform: uppercase;
-}
-
-.vooya-summary pre {
-  color: #a5b2bf;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  line-height: 1.5;
 }

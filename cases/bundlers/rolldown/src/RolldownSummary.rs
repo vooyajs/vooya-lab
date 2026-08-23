@@ -17,12 +17,18 @@ pub fn RolldownSummary(
     view: &voo::View,
     props: RolldownSummaryProps,
 ) -> Result<voo::ViewElement, JsValue> {
-    let summary = format!("{} · {} assets · {} ms", props.status, props.asset_count, props.duration_ms);
+    let title = match props.status.as_str() {
+        "success" => "Build succeeded",
+        "error" => "Build failed",
+        "building" => "Building in the browser…",
+        "needs-isolation" => "Build paused by the host",
+        _ => "Ready to build",
+    };
+    let summary = format!("{} · {} emitted files · {} ms", title, props.asset_count, props.duration_ms);
     Ok(voo::rsx!(view,
         <article class="vooya-summary">
             <p class="summary-label">{"Vooya Rust summary"}</p>
             <strong>{summary}</strong>
-            <pre>{props.output}</pre>
         </article>
     )?)
 }

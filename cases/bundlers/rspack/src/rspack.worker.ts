@@ -27,11 +27,19 @@ self.onmessage = async (event: MessageEvent<BuildRequest>) => {
           return;
         }
         const files = builtinMemFs.volume.toJSON();
+        const artifacts = Object.entries(files)
+          .filter(([file]) => file.startsWith("/dist/"))
+          .map(([file, content]) => ({
+            path: file,
+            language: file.endsWith(".js") ? "JavaScript" : "Asset",
+            content: String(content),
+          }));
         self.postMessage({
           type: "result",
           output: stats.toString(),
-          assetCount: Object.keys(files).filter((file) => file.startsWith("/dist/")).length,
+          assetCount: artifacts.length,
           durationMs: Math.round(performance.now() - started),
+          artifacts,
         });
       },
     );

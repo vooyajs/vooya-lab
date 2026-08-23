@@ -28,11 +28,17 @@ self.onmessage = async (event: MessageEvent<BuildRequest>) => {
       ],
     });
     const generated = await bundle.generate({ format: "es" });
+    const artifacts = generated.output.map((item) => ({
+      path: `/dist/${item.fileName}`,
+      language: item.type === "asset" ? "Asset" : "JavaScript",
+      content: item.type === "asset" ? String(item.source ?? "") : item.code,
+    }));
     self.postMessage({
       type: "result",
       output: generated.output.map((item) => item.type === "asset" ? item.fileName : item.code).join("\n"),
       assetCount: generated.output.length,
       durationMs: Math.round(performance.now() - started),
+      artifacts,
     });
   } catch (error) {
     self.postMessage({ type: "error", error: error instanceof Error ? error.message : String(error) });
