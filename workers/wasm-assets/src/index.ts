@@ -43,7 +43,7 @@ const ALLOWED_KEYS = new Set(["wasm/rspack.wasm"]);
 
 function originAllowed(request: Request, env: Env): boolean {
   const origin = request.headers.get("Origin");
-  return !origin || origin === env.ALLOWED_ORIGIN || origin === "http://localhost:5173";
+  return !origin || allowedOrigins(env).has(origin) || origin === "http://localhost:5173";
 }
 
 function corsHeaders(request: Request, env: Env): Headers {
@@ -54,10 +54,14 @@ function corsHeaders(request: Request, env: Env): Headers {
     "Cross-Origin-Resource-Policy": "cross-origin",
   });
   const origin = request.headers.get("Origin");
-  if (origin && (origin === env.ALLOWED_ORIGIN || origin === "http://localhost:5173")) {
+  if (origin && (allowedOrigins(env).has(origin) || origin === "http://localhost:5173")) {
     headers.set("Access-Control-Allow-Origin", origin);
   }
   return headers;
+}
+
+function allowedOrigins(env: Env): Set<string> {
+  return new Set(env.ALLOWED_ORIGIN.split(",").map((origin) => origin.trim()).filter(Boolean));
 }
 
 export default {

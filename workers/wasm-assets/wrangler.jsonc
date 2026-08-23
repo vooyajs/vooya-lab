@@ -5,7 +5,7 @@
   "compatibility_date": "2026-08-23",
   "vars": {
     "ASSETS_ENABLED": "false",
-    "ALLOWED_ORIGIN": "https://vooya-lab.pages.dev",
+    "ALLOWED_ORIGIN": "https://vooyajs.github.io,https://vooya-lab.pages.dev",
     "MAX_REQUESTS_PER_DAY": "5000"
   },
   "durable_objects": {

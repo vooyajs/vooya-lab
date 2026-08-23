@@ -7,8 +7,8 @@ the lab owns cross-scenario evidence and interactive demos.
 
 ## Related resources
 
-- [Vooya documentation](https://vooya.dev/docs) — authoring contracts, Rust-file guidance, and compatibility boundaries;
-- [Open the hosted lab](https://vooya-lab.pages.dev/) — interactive browser cases and live integration evidence;
+- [Vooya documentation](https://vooyajs.com/) — authoring contracts, Rust-file guidance, and compatibility boundaries;
+- [Open the hosted lab](https://vooyajs.github.io/vooya-lab/) — interactive browser cases and live integration evidence;
 - [Vooya Lab source](https://github.com/vooyajs/vooya-lab) — case implementations and deployment configuration.
 
 Every case in this repository must include a Rust component or store compiled
