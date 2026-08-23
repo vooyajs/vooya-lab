@@ -1,13 +1,45 @@
+import { DurableObject } from "cloudflare:workers";
+
 export interface Env {
   WASM_ASSETS: R2Bucket;
+  DAILY_QUOTA: DurableObjectNamespace<DailyQuota>;
   ASSETS_ENABLED: string;
   ALLOWED_ORIGIN: string;
-  RATE_LIMIT_PER_MINUTE: string;
+  MAX_REQUESTS_PER_DAY: string;
+}
+
+export class DailyQuota extends DurableObject<Env> {
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env);
+    ctx.blockConcurrencyWhile(async () => {
+      this.ctx.storage.sql.exec(`
+        CREATE TABLE IF NOT EXISTS daily_quota (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          day TEXT NOT NULL,
+          count INTEGER NOT NULL
+        )
+      `);
+    });
+  }
+
+  consume(day: string, limit: number): { allowed: boolean; count: number } {
+    const row = this.ctx.storage.sql
+      .exec<{ day: string; count: number }>("SELECT day, count FROM daily_quota WHERE id = 1")
+      .toArray()[0];
+    const count = row?.day === day ? row.count : 0;
+    if (count >= limit) return { allowed: false, count };
+    const nextCount = count + 1;
+    this.ctx.storage.sql.exec(
+      `INSERT INTO daily_quota (id, day, count) VALUES (1, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET day = excluded.day, count = excluded.count`,
+      day,
+      nextCount,
+    );
+    return { allowed: true, count: nextCount };
+  }
 }
 
 const ALLOWED_KEYS = new Set(["wasm/rspack.wasm"]);
-const WINDOW_MS = 60_000;
-const requestWindows = new Map<string, { startedAt: number; count: number }>();
 
 function originAllowed(request: Request, env: Env): boolean {
   const origin = request.headers.get("Origin");
@@ -28,19 +60,6 @@ function corsHeaders(request: Request, env: Env): Headers {
   return headers;
 }
 
-function rateLimited(request: Request, env: Env): boolean {
-  const limit = Math.max(1, Number.parseInt(env.RATE_LIMIT_PER_MINUTE || "30", 10));
-  const key = request.headers.get("CF-Connecting-IP") || "unknown";
-  const now = Date.now();
-  const current = requestWindows.get(key);
-  if (!current || now - current.startedAt >= WINDOW_MS) {
-    requestWindows.set(key, { startedAt: now, count: 1 });
-    return false;
-  }
-  current.count += 1;
-  return current.count > limit;
-}
-
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const headers = corsHeaders(request, env);
@@ -52,13 +71,18 @@ export default {
     if (env.ASSETS_ENABLED !== "true") {
       return new Response("WASM assets are temporarily disabled", { status: 503, headers });
     }
-    if (rateLimited(request, env)) {
-      headers.set("Retry-After", "60");
-      return new Response("Rate limit exceeded", { status: 429, headers });
-    }
-
     const pathname = new URL(request.url).pathname.replace(/^\/+/, "");
     if (!ALLOWED_KEYS.has(pathname)) return new Response("Not found", { status: 404, headers });
+
+    const maxRequests = Math.max(1, Number.parseInt(env.MAX_REQUESTS_PER_DAY || "5000", 10));
+    const quota = env.DAILY_QUOTA.getByName("wasm-assets");
+    const result = await quota.consume(new Date().toISOString().slice(0, 10), maxRequests);
+    if (!result.allowed) {
+      headers.set("Retry-After", "86400");
+      headers.set("X-Vooya-Quota", "daily-limit-reached");
+      return new Response("Daily WASM request limit reached; service will resume tomorrow", { status: 429, headers });
+    }
+
     const object = await env.WASM_ASSETS.get(pathname);
     if (!object) return new Response("Not found", { status: 404, headers });
     object.writeHttpMetadata(headers);

@@ -6,8 +6,16 @@
   "vars": {
     "ASSETS_ENABLED": "false",
     "ALLOWED_ORIGIN": "https://vooya-lab.pages.dev",
-    "RATE_LIMIT_PER_MINUTE": "30"
+    "MAX_REQUESTS_PER_DAY": "5000"
   },
+  "durable_objects": {
+    "bindings": [
+      { "name": "DAILY_QUOTA", "class_name": "DailyQuota" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["DailyQuota"] }
+  ],
   "r2_buckets": [
     { "binding": "WASM_ASSETS", "bucket_name": "vooya-lab-assets" }
   ]

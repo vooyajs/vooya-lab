@@ -6,8 +6,10 @@ exceed the Pages per-file limit.
 
 The default `ASSETS_ENABLED=false` is an intentional kill switch. Set it to
 `true` in the Worker variables only after the bucket and object are verified.
-The Worker also limits each client IP and only serves keys listed in
-`src/index.ts`.
+The Worker only serves keys listed in `src/index.ts` and has a persistent global
+daily request budget (`MAX_REQUESTS_PER_DAY`, currently 5,000). Once that cap
+is reached, the gateway returns `429` until the next UTC day, even if nobody
+is available to react to an alert.
 
 ## First-time setup
 
