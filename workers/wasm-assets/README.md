@@ -27,4 +27,14 @@ Deploy with:
 pnpm run wasm-assets:deploy
 ```
 
+The config intentionally deploys with the gateway disabled. After checking the
+object, enable it for one deployment with:
+
+```sh
+pnpm exec wrangler deploy --config workers/wasm-assets/wrangler.jsonc --var ASSETS_ENABLED:true
+```
+
+Use `--var ASSETS_ENABLED:false` as the manual kill switch. The variable is
+also editable in the Worker dashboard.
+
 Keep the bucket private and expose it only through this Worker.
