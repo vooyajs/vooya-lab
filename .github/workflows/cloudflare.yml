@@ -1,0 +1,66 @@
+name: Deploy Vooya Lab to Cloudflare
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-production
+  cancel-in-progress: true
+
+env:
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  WASM_GATEWAY_URL: https://vooya-lab-wasm-assets.vooya-lab.workers.dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.29.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Upload large WASM to R2
+        run: |
+          pnpm exec wrangler r2 object put vooya-lab-assets/wasm/rspack.wasm \
+            --file apps/web/node_modules/@rspack/browser/dist/rspack.wasm32-wasi.wasm \
+            --content-type application/wasm \
+            --cache-control 'public, max-age=31536000, immutable' \
+            --remote --force
+
+      - name: Deploy WASM gateway
+        run: |
+          pnpm exec wrangler deploy \
+            --config workers/wasm-assets/wrangler.jsonc \
+            --var ASSETS_ENABLED:true \
+            --var MAX_REQUESTS_PER_DAY:5000
+
+      - name: Prepare Rust/WASM toolchain
+        run: |
+          rustup target add wasm32-unknown-unknown
+          cargo install wasm-bindgen-cli --version 0.2.115 --locked
+
+      - name: Build Pages artifact
+        run: |
+          VOOYA_BASE="/" \
+          VITE_RSPACK_WASM_URL="${WASM_GATEWAY_URL}/wasm/rspack.wasm?v=${GITHUB_SHA}" \
+          pnpm build:pages
+
+      - name: Deploy Pages
+        run: |
+          pnpm exec wrangler pages deploy dist \
+            --project-name vooya-lab \
+            --branch main \
+            --commit-hash "${GITHUB_SHA}" \
+            --commit-message "${GITHUB_SHA}"

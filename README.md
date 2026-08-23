@@ -62,11 +62,14 @@ Rspack and Rolldown paths.
 
 Cloudflare Pages has a per-file upload limit, so the larger Rspack binary lives
 outside `dist`. `workers/wasm-assets` is a private-R2 gateway with CORS and
-cross-origin resource headers, a path allowlist, a conservative per-IP request
-window, and an `ASSETS_ENABLED` kill switch. The Rspack Worker uses
+cross-origin resource headers, a path allowlist, a persistent daily request
+quota, and an `ASSETS_ENABLED` kill switch. The Rspack Worker uses
 `VITE_RSPACK_WASM_URL` when set and otherwise falls back to the package-local
 WASM file for local development.
 
 For a Pages upload, set `VITE_RSPACK_WASM_URL` to the deployed Worker URL and
 run `pnpm build:pages`. The final command removes only the generated Rspack
 binary from `dist/assets`; Rolldown, Vooya, and the application remain in Pages.
+
+For the repeatable Cloudflare setup, GitHub Actions workflow, quota guard, and
+rollback procedure, see [docs/cloudflare-wasm-assets.md](docs/cloudflare-wasm-assets.md).
