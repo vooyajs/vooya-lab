@@ -24,8 +24,8 @@ WASM 超过该限制。WASM 仍然是普通静态资源，只是由 Worker 从�
    - `CLOUDFLARE_ACCOUNT_ID`：Cloudflare 账号 ID；
    - `CLOUDFLARE_API_TOKEN`：专用于 CI 的 API Token。
 
-   API Token 至少需要当前账号的 Workers Script 编辑、Pages 编辑、R2
-   Object Read & Write 权限。不要把 Wrangler OAuth 文件或 R2 Secret Key
+   API Token 至少需要当前账号的 Workers Scripts Edit、Pages Edit、Workers
+   R2 Storage Edit 权限。不要把 Wrangler OAuth 文件或 R2 Secret Key
    提交到仓库。
 
 3. 确认以下资源已经存在：
