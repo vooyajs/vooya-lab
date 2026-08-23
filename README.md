@@ -46,12 +46,14 @@ pnpm build
 pnpm typecheck
 ```
 
-Rspack Browser uses a Worker and may require a cross-origin-isolated deployment
-(`Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy`). The case
-reports that environment requirement at runtime instead of hiding it.
+Rspack Browser and Rolldown Browser use Workers and shared WebAssembly memory,
+so they require a cross-origin-isolated deployment (`Cross-Origin-Opener-Policy`
+and `Cross-Origin-Embedder-Policy`). Each case reports that environment
+requirement at runtime instead of hiding it.
 
-The included GitHub Pages workflow is useful for the static catalog and
-Rolldown/Vooya cases. GitHub Pages does not normally let a project set the
-cross-origin isolation headers required by Rspack Browser, so that case may
-remain in its explicit `needs-isolation` state there. A headers-capable static
-host can serve the same `dist` output for the full Rspack path.
+The included GitHub Pages workflow is useful for the static catalog and the
+Vooya-compiled Rust summaries. GitHub Pages does not normally let a project set
+the cross-origin isolation headers required by either browser bundler, so both
+cases may remain in their explicit `needs-isolation` state there. A
+headers-capable static host can serve the same `dist` output for the full
+Rspack and Rolldown paths.

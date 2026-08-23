@@ -8,7 +8,17 @@ const assetCount = ref(0);
 const durationMs = ref(0);
 let worker: Worker | undefined;
 
+function checkEnvironment() {
+  if (!crossOriginIsolated) {
+    status.value = "needs-isolation";
+    output.value = "Rolldown Browser needs a cross-origin-isolated deployment for shared WebAssembly memory.";
+    return false;
+  }
+  return true;
+}
+
 function runBuild() {
+  if (!checkEnvironment()) return;
   worker?.terminate();
   worker = new Worker(new URL("../../../../cases/bundlers/rolldown/src/rolldown.worker.ts", import.meta.url), { type: "module" });
   status.value = "building";
@@ -49,6 +59,7 @@ onBeforeUnmount(() => worker?.terminate());
   </p>
   <div class="toolbar">
     <button class="button primary" type="button" @click="runBuild">Run browser build</button>
+    <span v-if="status === 'needs-isolation'" class="notice">This host does not expose <code>crossOriginIsolated</code>.</span>
   </div>
   <RolldownSummary :status="status" :output="output" :asset_count="assetCount" :duration_ms="durationMs" />
 </template>
