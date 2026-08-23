@@ -13,7 +13,7 @@ import { RouterLink } from "vue-router";
     </p>
     <div class="hero-actions">
       <RouterLink class="button primary" to="/bundlers">Explore bundlers</RouterLink>
-      <a class="button subtle" href="https://github.com/vooyajs/vooya/tree/main/docs" target="_blank" rel="noreferrer">Read Vooya docs ↗</a>
+      <a class="button subtle" href="https://vooya.dev/docs" target="_blank" rel="noreferrer">Read Vooya docs ↗</a>
     </div>
   </section>
 
