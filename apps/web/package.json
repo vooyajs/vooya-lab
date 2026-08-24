@@ -12,6 +12,7 @@
   "dependencies": {
     "@rolldown/browser": "1.2.5",
     "@rspack/browser": "2.1.10",
+    "@vooya-lab/ide": "workspace:*",
     "@vooya/vue": "0.1.0-alpha.10",
     "path-browserify": "1.0.1",
     "vue": "3.5.41",

@@ -1,9 +1,16 @@
 # Vooya Lab
 
-Vooya Lab is a browser integration laboratory for Vooya Rust/WASM components,
-precompiled artifacts, and browser-hosted tooling. It is intentionally separate
-from the Vooya compiler repository: the compiler owns the authoring contract;
-the lab owns cross-scenario evidence and interactive demos.
+Vooya Lab is the interactive gallery for Vooya Rust/WASM components. Visitors
+can run each demo, switch between a Vooya implementation and a plain Web
+baseline when that comparison is useful, and read the Rust, host-framework,
+style, and bundler source without leaving the page.
+
+The public product and navigation are a gallery. Compatibility and
+browser-tooling cases remain available at direct routes for focused testing,
+without competing with the gallery's public information architecture. The lab
+is intentionally separate from the Vooya compiler
+repository: the compiler owns the authoring contract, while the lab makes that
+contract visible through real, explorable examples.
 
 ## Related resources
 
@@ -11,10 +18,11 @@ the lab owns cross-scenario evidence and interactive demos.
 - [Open the hosted lab](https://vooyajs.github.io/vooya-lab/) — interactive browser cases and live integration evidence;
 - [Vooya Lab source](https://github.com/vooyajs/vooya-lab) — case implementations and deployment configuration.
 
-Every case in this repository must include a Rust component or store compiled
-through Vooya before it is considered complete. External browser WASM packages
-such as `@rspack/browser` and `@rolldown/browser` are dependencies exercised by
-the case, not replacements for the Vooya compilation path.
+Every case marked `live` must include a Rust component or store compiled through
+Vooya. Planned cards may communicate the gallery roadmap, but they do not link
+to a simulated implementation. External browser WASM packages such as
+`@rspack/browser` and `@rolldown/browser` are dependencies exercised by an
+experiment, not replacements for the Vooya compilation path.
 
 ## Case layout
 
@@ -31,8 +39,8 @@ cases/
   wasm/
 ```
 
-The public site maps these directories to routes such as
-`/bundlers/rspack` and `/bundlers/rolldown`.
+The public site maps component demos to `/showcase/<case>` and browser-tooling
+experiments to routes such as `/bundlers/rspack`.
 
 ## Local development
 

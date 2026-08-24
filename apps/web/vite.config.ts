@@ -16,13 +16,20 @@ export default defineConfig({
       rust: {
         entry: "cases/lib.rs",
         sourceRoot: "cases",
-        webSysFeatures: ["CanvasRenderingContext2d", "HtmlCanvasElement"],
+        dependencies: {
+          rstar: "0.12.2",
+        },
+        webSysFeatures: ["CanvasRenderingContext2d", "DomRect", "HtmlCanvasElement", "MouseEvent", "Performance"],
       },
     }),
   ],
   resolve: {
     alias: [
+      { find: /^@vooya-lab\/ide$/, replacement: fileURLToPath(new URL("../../packages/ide/src/index.ts", import.meta.url)) },
       { find: "@lab-cases", replacement: fileURLToPath(new URL("../../cases", import.meta.url)) },
+      { find: "@lab-web", replacement: fileURLToPath(new URL("./src", import.meta.url)) },
+      { find: /^vue$/, replacement: fileURLToPath(new URL("./node_modules/vue/dist/vue.runtime.esm-bundler.js", import.meta.url)) },
+      { find: /^vue-router$/, replacement: fileURLToPath(new URL("./node_modules/vue-router/dist/vue-router.mjs", import.meta.url)) },
       // Exact runtime matching prevents the broader @vooya/vite alias from
       // turning @vooya/vite/runtime into a non-existent filesystem path.
       { find: /^@vooya\/vite\/runtime$/, replacement: fileURLToPath(new URL("./node_modules/@vooya/vite/dist/runtime.js", import.meta.url)) },

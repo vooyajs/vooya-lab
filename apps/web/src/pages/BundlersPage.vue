@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { RouterLink, RouterView, useRoute } from "vue-router";
-import { catalogFolders } from "../catalog";
+import { experimentFolders } from "../experiments/catalog";
 
 const route = useRoute();
 const isTreeOpen = ref(true);
@@ -13,7 +13,7 @@ const openFolders = ref<Record<string, boolean>>({
 
 const activeFolder = computed(() => {
   const slug = route.path.split("/")[1] || "bundlers";
-  return catalogFolders.find((folder) => folder.slug === slug) ?? catalogFolders[0];
+  return experimentFolders.find((folder) => folder.slug === slug) ?? experimentFolders[0];
 });
 
 const liveCount = computed(() => activeFolder.value.entries.filter((entry) => entry.status === "live").length);
@@ -45,7 +45,7 @@ function statusLabel(status: string) {
           <strong>cases/</strong>
         </button>
         <div v-show="isTreeOpen" class="tree-children">
-          <div v-for="folder in catalogFolders" :key="folder.slug" class="category-group">
+          <div v-for="folder in experimentFolders" :key="folder.slug" class="category-group">
             <button
               class="category-link category-toggle"
               type="button"

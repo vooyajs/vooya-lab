@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref } from "vue";
-import MiniCodePane, { type CodeFile } from "../components/MiniCodePane.vue";
+import { VooyaIde, type IdeFile } from "@vooya-lab/ide";
 import RolldownSummary from "@lab-cases/bundlers/rolldown/src/RolldownSummary.rs";
 
 type BuildMessage = {
@@ -9,15 +9,15 @@ type BuildMessage = {
   assetCount?: number;
   durationMs?: number;
   error?: string;
-  artifacts?: CodeFile[];
+  artifacts?: IdeFile[];
 };
 
 const DEFAULT_SOURCE = 'export const message = "hello from the Vooya Lab fixture";';
 const status = ref("ready");
 const output = ref("Ready to run. Edit the virtual file, then start a browser build.");
-const sourceFiles = ref<CodeFile[]>([{ path: "/src/main.js", language: "JavaScript", content: DEFAULT_SOURCE }]);
+const sourceFiles = ref<IdeFile[]>([{ path: "/src/main.js", language: "JavaScript", content: DEFAULT_SOURCE }]);
 const activeSourcePath = ref("/src/main.js");
-const outputFiles = ref<CodeFile[]>([{ path: "/build.log", language: "Build log", content: "No build has run yet." }]);
+const outputFiles = ref<IdeFile[]>([{ path: "/build.log", language: "Build log", content: "No build has run yet." }]);
 const activeOutputPath = ref("/build.log");
 const assetCount = ref(0);
 const durationMs = ref(0);
@@ -118,14 +118,14 @@ onBeforeUnmount(() => worker?.terminate());
   <p v-if="status === 'needs-isolation'" class="notice notice-block">This host does not expose <code>crossOriginIsolated</code>. Use the deployed lab or a server with COOP/COEP headers.</p>
 
   <div class="mini-ide-workspace">
-    <MiniCodePane
+    <VooyaIde
       title="Source files"
       :files="sourceFiles"
       :active-path="activeSourcePath"
       @update:active-path="activeSourcePath = $event"
       @update:file-content="updateSource"
     />
-    <MiniCodePane
+    <VooyaIde
       title="Bundle result"
       :files="outputFiles"
       :active-path="activeOutputPath"

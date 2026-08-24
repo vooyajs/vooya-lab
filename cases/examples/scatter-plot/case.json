@@ -2,11 +2,11 @@
   "$schema": "../../case.schema.json",
   "category": "examples",
   "slug": "scatter-plot",
-  "title": "Scatter plot",
+  "title": "R-tree scatter explorer",
   "status": "live",
   "vooyaComponent": "./src/ScatterPlot.rs",
-  "host": "apps/web/src/components/RenderCaseStage.vue",
-  "interactions": ["change point count", "zoom", "reset zoom"],
+  "host": "./DemoPage.vue",
+  "interactions": ["query nearest point", "compare R-tree and linear scan", "change point count", "zoom"],
   "reference": "https://github.com/vooyajs/vooya/blob/main/docs/guide/scatter-plot.md",
-  "evidence": ["Rust-file component compiled by the lab Vooya entry", "canvas renders the selected point count"]
+  "evidence": ["Rust-file component compiled by the lab Vooya entry", "rstar crate builds an R-tree over the selected point count", "pointer queries update from both implementations"]
 }

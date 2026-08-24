@@ -20,10 +20,46 @@
   font: .68rem ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-[data-scatter-canvas] {
+.scatter-toolbar .scatter-query {
+  margin-left: auto;
+  color: #76e3ba;
+}
+
+.scatter-surface {
+  position: relative;
+  overflow: hidden;
   border-top: 1px solid #1e303c;
+}
+
+[data-scatter-canvas] {
   display: block;
   height: auto;
   max-width: 100%;
   width: 100%;
+}
+
+.scatter-nearest-marker {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 0 0 4px rgba(118, 227, 186, .25);
+  transform: translate(-50%, -50%);
+}
+
+@media (max-width: 720px) {
+  .scatter-toolbar {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    padding-top: 9px;
+    padding-bottom: 9px;
+  }
+
+  .scatter-toolbar .scatter-query {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
 }
