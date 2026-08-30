@@ -132,7 +132,55 @@ test("generated scatter route compares implementations and exposes a gated workb
   await explorer.getByRole("treeitem", { name: "DemoPage.vue", exact: true }).click();
   await expect(page.getByRole("tab", { name: /DemoPage\.vue/ })).toBeVisible();
   await expect(page.locator(".vooya-ide-editor-host .cm-content")).toContainText("ScatterPlot");
-  await expect(page.locator(".vooya-ide-editor-host .cm-content")).toHaveAttribute("contenteditable", "false");
+  const sourceContent = page.locator(".vooya-ide-editor-host .cm-content");
+  await expect(sourceContent).toHaveAttribute("contenteditable", "true");
+  await expect(sourceContent).toHaveAttribute("aria-readonly", "true");
+  const selectionPoints = await page.locator(".vooya-ide-editor-host .cm-line").first().evaluate((line) => {
+    const pointAt = (offset: number) => {
+      const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
+      let remaining = offset;
+      let node = walker.nextNode();
+      while (node) {
+        const length = node.textContent?.length ?? 0;
+        if (remaining <= length) {
+          const range = document.createRange();
+          range.setStart(node, remaining);
+          range.collapse(true);
+          const rect = range.getBoundingClientRect();
+          return { x: rect.left, y: rect.top + rect.height / 2 };
+        }
+        remaining -= length;
+        node = walker.nextNode();
+      }
+      throw new Error(`No text position at offset ${offset}`);
+    };
+    return { start: pointAt(4), end: pointAt(17), expected: line.textContent?.slice(4, 17) ?? "" };
+  });
+  await page.mouse.move(selectionPoints.start.x, selectionPoints.start.y);
+  await page.mouse.down();
+  await page.mouse.move(selectionPoints.end.x, selectionPoints.end.y, { steps: 8 });
+  await page.mouse.up();
+  expect(await page.evaluate(() => getSelection()?.toString())).toBe(selectionPoints.expected);
+  await expect(page.locator(".vooya-ide-status")).toContainText("13 selected");
+  await page.keyboard.press("Shift+ArrowRight");
+  await expect(page.locator(".vooya-ide-status")).toContainText("14 selected");
+  const selectionPresentation = await page.locator(".vooya-ide-editor-host").evaluate((host) => {
+    const activeLine = host.querySelector(".cm-activeLine");
+    const selection = host.querySelector(".cm-selectionBackground");
+    return {
+      activeLineBackground: activeLine ? getComputedStyle(activeLine).backgroundColor : "",
+      selectionBackground: selection ? getComputedStyle(selection).backgroundColor : "",
+      selectedWidth: selection?.getBoundingClientRect().width ?? 0,
+      lineWidth: activeLine?.getBoundingClientRect().width ?? 0,
+    };
+  });
+  expect(selectionPresentation.activeLineBackground).toContain("rgba");
+  expect(selectionPresentation.selectionBackground).not.toBe("rgba(0, 0, 0, 0)");
+  expect(selectionPresentation.selectedWidth).toBeGreaterThan(0);
+  expect(selectionPresentation.selectedWidth).toBeLessThan(selectionPresentation.lineWidth);
+  const readonlySource = await sourceContent.textContent();
+  await page.keyboard.type("this must not edit");
+  await expect(sourceContent).toHaveText(readonlySource ?? "");
   const editorScroller = page.locator(".vooya-ide-editor-host .cm-scroller");
   const editorMetrics = await editorScroller.evaluate((element) => ({
     clientHeight: element.clientHeight,
@@ -294,7 +342,8 @@ test("Rspack case mounts its Vooya Rust summary", async ({ page }) => {
   await expect(page.getByText("Vooya Rust summary")).toBeVisible();
   await expect(page.getByText("@rspack/browser")).toBeVisible();
   await expect(page.locator('.vooya-ide[data-readonly="false"] .cm-content')).toHaveAttribute("contenteditable", "true");
-  await expect(page.locator('.vooya-ide[data-readonly="true"] .cm-content')).toHaveAttribute("contenteditable", "false");
+  await expect(page.locator('.vooya-ide[data-readonly="true"] .cm-content')).toHaveAttribute("contenteditable", "true");
+  await expect(page.locator('.vooya-ide[data-readonly="true"] .cm-content')).toHaveAttribute("aria-readonly", "true");
   await page.getByRole("button", { name: "Run browser build" }).click();
   await expect(page.locator(".status-pill")).toHaveAttribute("data-status", /needs-isolation|success|error/);
 });

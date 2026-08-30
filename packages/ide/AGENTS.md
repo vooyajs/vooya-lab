@@ -19,6 +19,12 @@ new page design.
 - Do not import application or case internals.
 - Preserve a complete read-only experience: file tree, tabs, selection, copy,
   generated declarations, diagnostics, and reset where applicable.
+- Keep read-only source focusable and character-selectable. Use CodeMirror's
+  state-level `readOnly` capability to reject edits; do not disable pointer
+  selection or replace the editor with line-sized source rows.
+- CodeMirror draws selection behind source text. Keep active-line backgrounds
+  translucent so they cannot conceal character-range selection, and preserve
+  an observable keyboard and pointer selection path in browser tests.
 
 ## Capability rules
 

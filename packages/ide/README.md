@@ -43,6 +43,21 @@ currently active file. Precompiled cases pass
 experience truthful. A surrounding Live Workbench may link to Compiler alpha,
 but that link does not change the current case's execution capability.
 
+## Selection and read-only behavior
+
+`readonly` uses CodeMirror's `EditorState.readOnly` capability to reject edit
+commands while keeping the content DOM focusable. This is intentional: source
+in a precompiled case must still support character-precise pointer selection,
+double-click word selection, keyboard extension, multiple selections, scrolling,
+and copy. Do not implement read-only mode by disabling pointer events or by
+making source a collection of line-sized selection targets.
+
+CodeMirror draws its selection layer behind the text. Active-line styling must
+therefore remain translucent; an opaque `.cm-activeLine` background hides the
+character-range highlight and makes a correct selection appear line-based. The
+status bar reports the primary line/column and selected character count so the
+same selection model remains observable in read-only and editable modes.
+
 ## Scope
 
 This remains an embedded IDE/work-surface package, not a browser Rust compiler.

@@ -34,6 +34,7 @@ const editorHost = ref<HTMLElement>();
 const internalPath = ref(props.activePath || props.files[0]?.path || "");
 const activeFile = computed(() => props.files.find((file) => file.path === internalPath.value) ?? props.files[0]);
 const openPaths = ref<string[]>(activeFile.value ? [activeFile.value.path] : []);
+const selectionStatus = ref("Ln 1, Col 1");
 let editor: EditorView | undefined;
 let applyingExternalState = false;
 
@@ -56,8 +57,10 @@ const vooyaTheme = EditorView.theme({
   ".cm-content": { padding: "16px 0", caretColor: "#7ee787", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: "13px", lineHeight: "1.62" },
   ".cm-line": { padding: "0 18px" },
   ".cm-gutters": { color: "#484f58", backgroundColor: "#0d1117", border: "0" },
-  ".cm-activeLine, .cm-activeLineGutter": { backgroundColor: "#161b22" },
-  ".cm-selectionBackground, &.cm-focused .cm-selectionBackground": { backgroundColor: "#1f6feb55" },
+  ".cm-activeLine": { backgroundColor: "rgba(126, 231, 135, 0.055)" },
+  ".cm-activeLineGutter": { backgroundColor: "rgba(126, 231, 135, 0.075)" },
+  ".cm-selectionBackground": { backgroundColor: "rgba(88, 166, 255, 0.22)" },
+  "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground": { backgroundColor: "rgba(88, 166, 255, 0.42)" },
   ".cm-cursor, .cm-dropCursor": { borderLeftColor: "#7ee787" },
   ".cm-scroller": { overflow: "auto" },
   "&.cm-focused": { outline: "none" },
@@ -78,8 +81,19 @@ const vooyaHighlightStyle = HighlightStyle.define([
   { tag: tags.invalid, color: "#ff7b72", textDecoration: "underline" },
 ]);
 
+function describeSelection(state: EditorState) {
+  const { main, ranges } = state.selection;
+  const line = state.doc.lineAt(main.head);
+  const selectedCharacters = ranges.reduce((total, range) => total + range.to - range.from, 0);
+  const selectedRanges = ranges.filter((range) => !range.empty).length;
+  const position = `Ln ${line.number}, Col ${main.head - line.from + 1}`;
+  if (!selectedCharacters) return ranges.length > 1 ? `${position} · ${ranges.length} cursors` : position;
+  const rangeLabel = selectedRanges > 1 ? ` · ${selectedRanges} selections` : "";
+  return `${position} · ${selectedCharacters} selected${rangeLabel}`;
+}
+
 function createState(file: IdeFile) {
-  return EditorState.create({
+  const state = EditorState.create({
     doc: file.content,
     extensions: [
       basicSetup,
@@ -87,13 +101,15 @@ function createState(file: IdeFile) {
       vooyaTheme,
       syntaxHighlighting(vooyaHighlightStyle),
       EditorState.readOnly.of(props.readonly),
-      EditorView.editable.of(!props.readonly),
       EditorView.updateListener.of((update) => {
+        if (update.selectionSet || update.docChanged) selectionStatus.value = describeSelection(update.state);
         if (!update.docChanged || applyingExternalState || !activeFile.value) return;
         emit("update:fileContent", activeFile.value.path, update.state.doc.toString());
       }),
     ],
   });
+  selectionStatus.value = describeSelection(state);
+  return state;
 }
 
 function showFile(path: string) {
@@ -150,7 +166,10 @@ onBeforeUnmount(() => editor?.destroy());
           </div>
         </div>
         <div ref="editorHost" class="vooya-ide-editor-host"></div>
-        <footer class="vooya-ide-status"><span>Vooya Lab</span><span>{{ activeFile?.language ?? "text" }} · UTF-8 · LF</span></footer>
+        <footer class="vooya-ide-status">
+          <span>Vooya Lab</span>
+          <span>{{ selectionStatus }} · {{ activeFile?.language ?? "text" }} · UTF-8 · LF</span>
+        </footer>
       </div>
     </div>
   </section>
