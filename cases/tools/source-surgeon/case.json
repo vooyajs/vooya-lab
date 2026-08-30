@@ -1,0 +1,35 @@
+{
+  "$schema": "../../case.schema.json",
+  "category": "tools",
+  "slug": "source-surgeon",
+  "title": "Source Surgeon",
+  "summary": "Analyze Rust source with syn, inspect structural metrics, and preview a precise AST-backed function rename while the browser editor remains ordinary host UI.",
+  "tags": ["syn", "AST", "prettyplease", "developer-tools", "Vue", "WASM"],
+  "status": "experimental",
+  "portfolioClass": "flagship",
+  "question": "Can a mature Rust parser and rewrite capability become a lifecycle-safe WebIDE component instead of a bespoke WASM parser wrapper?",
+  "spec": "./SPEC.md",
+  "vooyaComponent": "./src/SourceSurgeon.rs",
+  "host": "./DemoPage.vue",
+  "interactions": ["edit a Rust source draft", "analyze its AST", "preview a structural rename", "trigger a parser diagnostic", "reset the specimen"],
+  "evidence": ["syn parses submitted source inside Rust/WASM", "visitor metrics and function inventory are Rust-owned", "VisitMut applies a structural function rename", "prettyplease emits the transformed source"],
+  "execution": { "mode": "precompiled", "editable": false },
+  "distribution": {
+    "mode": "demo-only",
+    "files": ["./src/SourceSurgeon.rs", "./src/SourceSurgeon.css", "./DemoPage.vue", "./sourceFiles.ts", "./index.ts"],
+    "dependencies": ["syn = 3.0.4", "prettyplease = 0.3.0", "@vooya/vue = 0.1.0-alpha.10"]
+  },
+  "proof": {
+    "hostOwns": ["draft textarea", "keyboard and focus behavior", "analyze and reset controls", "source Workbench and copy action"],
+    "rustOwns": ["Rust parsing", "AST traversal", "structural metrics", "identifier validation", "AST mutation", "formatted transformed output"],
+    "gpuRelationship": "not-applicable",
+    "boundary": {
+      "inputs": ["submitted Rust source", "optional replacement identifier"],
+      "outputs": ["AST inventory", "parser diagnostic", "formatted transformed source"],
+      "updatePattern": "The draft remains in Vue; one explicit Analyze action sends a coarse source string to the Rust component."
+    },
+    "reusedCrates": ["syn", "prettyplease"],
+    "vooyaContracts": ["Rust-file build", "typed string props", "Vue component adapter", "scoped style", "update and disposal"],
+    "alternatives": ["tree-sitter or TypeScript parser", "server-side analysis", "custom wasm-bindgen wrapper", "regex-based source rewrite"]
+  }
+}

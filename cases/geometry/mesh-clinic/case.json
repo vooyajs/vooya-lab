@@ -1,0 +1,35 @@
+{
+  "$schema": "../../case.schema.json",
+  "category": "geometry",
+  "slug": "mesh-clinic",
+  "title": "Mesh Clinic",
+  "summary": "Parse an OBJ specimen in Rust, expose degenerate, duplicate, boundary, and non-manifold topology, apply a bounded repair plan, and keep rendering in the Web host.",
+  "tags": ["tobj", "mesh", "topology", "SVG", "Vue", "WASM"],
+  "status": "experimental",
+  "portfolioClass": "flagship",
+  "question": "Can Vooya keep irregular mesh parsing and topology work in a reusable Rust capability while the host remains free to render the resulting projection with SVG, WebGL, or WebGPU?",
+  "spec": "./SPEC.md",
+  "vooyaComponent": "./src/MeshClinic.rs",
+  "host": "./DemoPage.vue",
+  "interactions": ["switch mesh specimens", "rotate the projection", "apply a bounded repair", "reset the clinic"],
+  "evidence": ["tobj parses the case-owned OBJ specimen inside Rust/WASM", "Rust computes topology diagnostics and projected triangles", "Vue renders only the structured snapshot", "focused browser evidence covers specimen, repair, rotation, and reset"],
+  "execution": { "mode": "precompiled", "editable": false },
+  "distribution": {
+    "mode": "demo-only",
+    "files": ["./src/MeshClinic.rs", "./src/MeshClinic.css", "./DemoPage.vue", "./sourceFiles.ts", "./index.ts"],
+    "dependencies": ["tobj = 4.0.5", "@vooya/vue = 0.1.0-alpha.10"]
+  },
+  "proof": {
+    "hostOwns": ["specimen and repair controls", "accessible metrics and explanation", "SVG diagnostic renderer", "gallery lifecycle"],
+    "rustOwns": ["OBJ parsing", "triangle normalization", "edge incidence", "degenerate and duplicate detection", "bounded repair planning", "projected geometry snapshot"],
+    "gpuRelationship": "complement",
+    "boundary": {
+      "inputs": ["coarse specimen action", "repair action", "rotation angle"],
+      "outputs": ["mesh metrics", "diagnostic labels", "projected triangle polygons"],
+      "updatePattern": "Vue dispatches one coarse action; Rust retains the mesh and emits one bounded snapshot for host rendering."
+    },
+    "reusedCrates": ["tobj"],
+    "vooyaContracts": ["Rust-file build", "instance-scoped Store", "typed actions", "structured snapshot", "Vue adapter", "disposal"],
+    "alternatives": ["plain TypeScript OBJ parser and topology walk", "custom wasm-bindgen store bridge", "GPU-only validation", "full browser CAD engine"]
+  }
+}

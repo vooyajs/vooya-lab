@@ -17,3 +17,12 @@ pub mod workflow_replay;
 
 #[path = "simulation/bevy-world-inspector/src/BevyWorld.rs"]
 pub mod bevy_world;
+
+#[path = "geometry/mesh-clinic/src/MeshClinic.rs"]
+pub mod mesh_clinic;
+
+#[path = "geometry/vector-tile-forge/src/VectorTileForge.rs"]
+pub mod vector_tile_forge;
+
+#[path = "tools/source-surgeon/src/SourceSurgeon.rs"]
+pub mod source_surgeon;

@@ -1,0 +1,35 @@
+{
+  "$schema": "../../case.schema.json",
+  "category": "geometry",
+  "slug": "vector-tile-forge",
+  "title": "Vector Tile Forge",
+  "summary": "Decode a compact GeoJSON tile, simplify its geometry with Rust geo algorithms, triangulate polygon output, and hand a bounded projection back to the Web renderer.",
+  "tags": ["geo", "geojson", "earcut", "maps", "SVG", "WASM"],
+  "status": "experimental",
+  "portfolioClass": "flagship",
+  "question": "Can a Vooya Store make the CPU geometry and Web renderer split visible while keeping decoding, simplification, and triangulation behind one typed lifecycle?",
+  "spec": "./SPEC.md",
+  "vooyaComponent": "./src/VectorTileForge.rs",
+  "host": "./DemoPage.vue",
+  "interactions": ["change simplification tolerance", "toggle triangulation overlay", "inspect payload reduction", "reset the tile"],
+  "evidence": ["geojson decodes the embedded feature collection inside Rust/WASM", "geo simplifies line and polygon geometry", "earcutr triangulates the simplified polygon", "Vue renders the structured Rust snapshot"],
+  "execution": { "mode": "precompiled", "editable": false },
+  "distribution": {
+    "mode": "demo-only",
+    "files": ["./src/VectorTileForge.rs", "./src/VectorTileForge.css", "./DemoPage.vue", "./sourceFiles.ts", "./index.ts"],
+    "dependencies": ["geo = 0.33.1", "geojson = 1.0.0", "earcutr = 0.5.0", "@vooya/vue = 0.1.0-alpha.10"]
+  },
+  "proof": {
+    "hostOwns": ["tolerance and overlay controls", "map labels and accessible explanation", "SVG presentation", "future WebGPU renderer lifecycle"],
+    "rustOwns": ["GeoJSON decoding", "geometry normalization", "line and ring simplification", "polygon triangulation", "compact render projection"],
+    "gpuRelationship": "complement",
+    "boundary": {
+      "inputs": ["simplification tolerance action"],
+      "outputs": ["simplified layer paths", "triangle overlay", "vertex and payload metrics"],
+      "updatePattern": "A coarse tolerance update recomputes the retained Rust geometry and emits one bounded render snapshot."
+    },
+    "reusedCrates": ["geo", "geojson", "earcutr"],
+    "vooyaContracts": ["Rust-file build", "instance-scoped Store", "typed numeric action", "structured snapshot", "Vue adapter", "disposal"],
+    "alternatives": ["Turf or handwritten TypeScript geometry pipeline", "custom wasm-bindgen worker", "GPU compute simplification", "server-rendered map tiles"]
+  }
+}

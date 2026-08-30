@@ -390,6 +390,73 @@ test("Bevy World Inspector runs a real bounded ECS schedule behind the Vue host"
   await expect.poll(() => previewPane.evaluate((element) => element.getBoundingClientRect().height)).toBe(previewHeight);
 });
 
+test("Mesh Clinic parses topology in Rust and applies only its bounded repair", async ({ page }) => {
+  await page.goto("/#/cases/geometry/mesh-clinic");
+  const preview = page.getByRole("region", { name: "Interactive Mesh Clinic topology inspector" });
+  const report = preview.locator(".mesh-clinic-inspector");
+  await expect(preview.getByRole("heading", { name: "DAMAGED SPECIMEN" })).toBeVisible();
+  await expect(report.locator("li", { hasText: "DEGENERATE FACES" }).locator("b")).toHaveText("1");
+  await expect(report.locator("li", { hasText: "DUPLICATE FACES" }).locator("b")).toHaveText("1");
+  await expect(report.locator("li", { hasText: "NON-MANIFOLD EDGES" }).locator("b")).toHaveText("3");
+
+  await preview.getByRole("button", { name: "APPLY SAFE REPAIR" }).click();
+  await expect(preview.getByRole("heading", { name: "BOUNDED REPAIR" })).toBeVisible();
+  await expect(report.locator("li", { hasText: "DEGENERATE FACES" }).locator("b")).toHaveText("0");
+  await expect(report.locator("li", { hasText: "DUPLICATE FACES" }).locator("b")).toHaveText("0");
+  await expect(report.getByText("REMOVED").locator("..").locator("dd")).toHaveText("2");
+  await expect(preview.getByRole("button", { name: "APPLY SAFE REPAIR" })).toBeDisabled();
+
+  await preview.getByRole("slider").fill("120");
+  await expect(preview.getByText("120° YAW")).toBeVisible();
+  await preview.getByRole("button", { name: "REFERENCE" }).click();
+  await expect(preview.getByRole("heading", { name: "REFERENCE CUBE" })).toBeVisible();
+  await expect(preview.getByText("SEALED", { exact: true }).first()).toBeVisible();
+  await preview.getByRole("button", { name: "RESET" }).click();
+  await expect(preview.getByRole("heading", { name: "DAMAGED SPECIMEN" })).toBeVisible();
+});
+
+test("Vector Tile Forge keeps decode, simplification, and triangulation in its Rust Store", async ({ page }) => {
+  await page.goto("/#/cases/geometry/vector-tile-forge");
+  const preview = page.getByRole("region", { name: "Interactive Vector Tile Forge geometry pipeline" });
+  const metrics = preview.locator(".vector-forge-metrics");
+  await expect(metrics).toContainText("75 → 63");
+  await expect(metrics).toContainText("16% REDUCTION");
+  await expect(metrics).toContainText("21");
+
+  const triangleToggle = preview.getByRole("button", { name: "SHOW TRIANGLES" });
+  await triangleToggle.click();
+  await expect(preview.locator(".forge-triangle")).toHaveCount(21);
+  await preview.getByRole("slider").fill("28");
+  await expect(metrics).toContainText("75 → 54");
+  await expect(metrics).toContainText("28% REDUCTION");
+  await expect(preview.locator(".forge-triangle")).toHaveCount(14);
+
+  await preview.getByRole("button", { name: "RESET TILE" }).click();
+  await expect(metrics).toContainText("75 → 63");
+  await expect(preview.locator(".forge-triangle")).toHaveCount(0);
+});
+
+test("Source Surgeon performs AST-backed analysis, rewrite, and parser failure recovery", async ({ page }) => {
+  await page.goto("/#/cases/tools/source-surgeon");
+  const preview = page.getByRole("region", { name: "Interactive Source Surgeon Rust analysis tool" });
+  const output = preview.locator("[data-surgeon-output]");
+  await expect(preview.getByText("Rust syntax accepted")).toBeVisible();
+  await expect(preview.getByText("2 matching identifiers replaced")).toBeVisible();
+  await expect(output).toContainText("fn summarize_local");
+  await expect(output).toContainText("summarize_local(&index)");
+
+  await preview.getByRole("textbox", { name: "Replacement function name" }).fill("aggregate_local");
+  await preview.getByRole("button", { name: "ANALYZE AST" }).click();
+  await expect(output).toContainText("fn aggregate_local");
+  await expect(output).toContainText("aggregate_local(&index)");
+
+  await preview.getByRole("button", { name: "LOAD INVALID FIXTURE" }).click();
+  await expect(preview.getByText("The draft is not valid Rust syntax")).toBeVisible();
+  await expect(preview.getByText("No regex fallback or partial rewrite was applied.")).toBeVisible();
+  await preview.getByRole("button", { name: "RESET" }).click();
+  await expect(preview.getByText("Rust syntax accepted")).toBeVisible();
+});
+
 test("Rspack case mounts its Vooya Rust summary", async ({ page }) => {
   await page.goto("/#/bundlers/rspack");
   await expect(page.getByText("Vooya Rust summary")).toBeVisible();
