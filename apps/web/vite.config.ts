@@ -18,6 +18,7 @@ export default defineConfig({
         sourceRoot: "cases",
         dependencies: {
           rstar: "0.12.2",
+          regex: "=1.12.2",
         },
         webSysFeatures: ["CanvasRenderingContext2d", "DomRect", "HtmlCanvasElement", "MouseEvent", "Performance"],
       },
@@ -26,6 +27,12 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: /^@vooya-lab\/ide$/, replacement: fileURLToPath(new URL("../../packages/ide/src/index.ts", import.meta.url)) },
+      { find: /^@vooya-lab\/case-schema$/, replacement: fileURLToPath(new URL("../../packages/case-schema/src/index.ts", import.meta.url)) },
+      { find: /^@vooya-lab\/compiler-protocol$/, replacement: fileURLToPath(new URL("../../packages/compiler-protocol/src/index.ts", import.meta.url)) },
+      { find: /^@vooya-lab\/compiler-browser$/, replacement: fileURLToPath(new URL("../../packages/compiler-browser/src/index.ts", import.meta.url)) },
+      { find: /^@vooya-lab\/preview-host$/, replacement: fileURLToPath(new URL("../../packages/preview-host/src/index.ts", import.meta.url)) },
+      { find: /^@vooya-lab\/runtime-module$/, replacement: fileURLToPath(new URL("../../packages/runtime-module/src/index.ts", import.meta.url)) },
+      { find: /^@vooya-lab\/runtime-wasi$/, replacement: fileURLToPath(new URL("../../packages/runtime-wasi/src/index.ts", import.meta.url)) },
       { find: "@lab-cases", replacement: fileURLToPath(new URL("../../cases", import.meta.url)) },
       { find: "@lab-web", replacement: fileURLToPath(new URL("./src", import.meta.url)) },
       { find: /^vue$/, replacement: fileURLToPath(new URL("./node_modules/vue/dist/vue.runtime.esm-bundler.js", import.meta.url)) },
@@ -40,6 +47,16 @@ export default defineConfig({
       { find: /^node:path$/, replacement: "path-browserify" },
       { find: /^node:process$/, replacement: fileURLToPath(new URL("./src/shims/process.ts", import.meta.url)) },
     ],
+  },
+  // Both browser bundlers are entered through Workers. Pre-bundle them at
+  // server startup so their first user action cannot trigger a Vite dependency
+  // optimization reload and erase the in-flight case state.
+  optimizeDeps: {
+    include: ["@rolldown/browser", "@rspack/browser"],
+    // This dependency is consumed only from lazy Workers. Optimizing it on the
+    // first compile/run action forces a full-page reload and destroys the
+    // in-flight compiler lifecycle; let the Worker pipeline transform it.
+    exclude: ["@bjorn3/browser_wasi_shim"],
   },
   server: {
     headers: {

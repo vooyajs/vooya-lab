@@ -1,0 +1,33 @@
+{
+  "assetId": "vooya-lab/lovart-openapi-test-01",
+  "owner": "shared-brand",
+  "role": "brand-experiment",
+  "status": "rejected-as-canonical-retained-as-api-proof",
+  "generator": {
+    "tool": "Lovart Agent OpenAPI",
+    "projectId": "71a998818a09463ba1f5aa9c96ac3586",
+    "projectUrl": "https://www.lovart.ai/canvas?projectId=71a998818a09463ba1f5aa9c96ac3586",
+    "modelOrMode": "generate_image_gpt_image_2_low; reasoning=fast; billing=fast"
+  },
+  "brief": "../vooya-lab-lovart-brief.md",
+  "prompt": "Create a square abstract logo study: a luminous lime V slash cutting through a deep black field, precise vector geometry, no text, high contrast.",
+  "references": [],
+  "generatedAt": "2026-08-30T14:27:00+08:00",
+  "downloadedAt": "2026-08-30T14:27:00+08:00",
+  "original": {
+    "path": "./lovart-openapi-test-01.png",
+    "sha256": "9493a9d7f927f8021b750277e2df1f8b4d8c47f522a4250e97e29e107eedb06f",
+    "mediaType": "image/png",
+    "width": 2048,
+    "height": 2048,
+    "bytes": 1268044,
+    "colorSpace": "RGB",
+    "hasAlpha": false
+  },
+  "derivatives": [],
+  "review": {
+    "reviewer": "Codex",
+    "decision": "retain-as-technical-proof-only",
+    "notes": "Valid high-contrast square asset with a readable lime V and no generated text. It proves the signed OpenAPI generation and download path, but the asymmetrical silhouette is generic, lacks the intended slash/boundary/index system, has no transparent variant, and is not suitable as the canonical Vooya Lab mark."
+  }
+}

@@ -1,0 +1,14 @@
+[package]
+name = "vooya-wasm-bindgen-wasi"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+wasm-bindgen-cli-support = "=0.2.115"
+
+[profile.release]
+opt-level = "s"
+lto = "thin"
+codegen-units = 1
+strip = "debuginfo"

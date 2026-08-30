@@ -3,11 +3,17 @@ import HomePage from "./pages/HomePage.vue";
 import BundlersPage from "./pages/BundlersPage.vue";
 import RspackPage from "./pages/RspackPage.vue";
 import RolldownPage from "./pages/RolldownPage.vue";
-import { ScatterPlotDemoPage } from "@lab-cases/examples/scatter-plot";
+import { runnableCases } from "./cases/registry";
+
+const generatedCaseRoutes: RouteRecordRaw[] = runnableCases.map((entry) => ({
+  path: entry.route,
+  component: () => entry.loadPage().then((module) => module.default),
+  meta: { caseRoute: true },
+}));
 
 export const routes: RouteRecordRaw[] = [
   { path: "/", component: HomePage },
-  { path: "/showcase/scatter-plot", component: ScatterPlotDemoPage },
+  ...generatedCaseRoutes,
   {
     path: "/bundlers",
     component: BundlersPage,
@@ -17,6 +23,8 @@ export const routes: RouteRecordRaw[] = [
       { path: "rolldown", component: RolldownPage },
     ],
   },
-  { path: "/examples/scatter-plot", redirect: "/showcase/scatter-plot" },
+  { path: "/experiments/browser-compiler", component: () => import("./pages/BrowserCompilerPage.vue") },
+  { path: "/showcase/scatter-plot", redirect: "/cases/examples/scatter-plot" },
+  { path: "/examples/scatter-plot", redirect: "/cases/examples/scatter-plot" },
   { path: "/:pathMatch(.*)*", redirect: "/" },
 ];

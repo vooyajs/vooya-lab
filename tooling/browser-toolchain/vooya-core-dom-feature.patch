@@ -1,0 +1,32 @@
+diff --git a/rust/Cargo.toml b/rust/Cargo.toml
+--- a/rust/Cargo.toml
++++ b/rust/Cargo.toml
+@@ -8,8 +8,12 @@ repository = "https://github.com/vooyajs/vooya"
+ [lib]
+ path = "src/lib.rs"
+ 
++[features]
++default = ["dom"]
++dom = ["dep:wasm-bindgen", "dep:web-sys"]
++
+ [dependencies]
+-wasm-bindgen = "=0.2.115"
+-web-sys = { version = "=0.3.92", features = [
++wasm-bindgen = { version = "=0.2.115", optional = true }
++web-sys = { version = "=0.3.92", optional = true, features = [
+   "Document",
+   "Comment",
+   "Element",
+diff --git a/rust/src/lib.rs b/rust/src/lib.rs
+--- a/rust/src/lib.rs
++++ b/rust/src/lib.rs
+@@ -1,7 +1,9 @@
+ //! Runtime primitives for Vooya components.
+ 
+ mod reactive;
++#[cfg(feature = "dom")]
+ mod view;
+ 
+ pub use reactive::{Effect, Signal, SignalSubscription, TrackedEffect, batch, effect, signal, tracked_effect};
++#[cfg(feature = "dom")]
+ pub use view::{ConditionalBranch, EventListener, KeyedChildren, MountCleanup, View, ViewAnchor, ViewElement};

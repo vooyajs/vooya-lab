@@ -1,0 +1,179 @@
+name: Build browser rustc unknown-unknown sysroot
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      # Compiler and libraries must come from this exact revision. Rust metadata
+      # from another revision is not compatible.
+      VOOYA_RUST_REF: abc48c0b8aba37d3f3862a9d5c76eb4e78f90e88
+      TARGET: wasm32-unknown-unknown
+
+    steps:
+      - name: Checkout Vooya Lab packaging tools
+        uses: actions/checkout@v4
+
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: false
+
+      - name: Setup swap
+        uses: thejerrybao/setup-swap-space@v1
+        with:
+          swap-size-gb: 10
+          remove-existing-swap-files: true
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build pkg-config zstd
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.29.2
+
+      - name: Install the wasm-bindgen tool target
+        run: rustup target add wasm32-wasip1
+
+      - name: Install the pinned Lab dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Clone the exact browser-rustc source
+        run: |
+          git clone https://github.com/AngelOnFira/rust rust
+          git -C rust checkout "$VOOYA_RUST_REF"
+          test "$(git -C rust rev-parse HEAD)" = "$VOOYA_RUST_REF"
+
+      - name: Apply the reviewed RIWL absolute-global export fix
+        run: git -C rust apply ../tooling/browser-toolchain/riwl-export-absolute-globals.patch
+
+      - name: Preserve wasm-bindgen linker metadata
+        run: git -C rust apply ../tooling/browser-toolchain/riwl-preserve-wasm-bindgen-section.patch
+
+      - name: Root explicitly exported archive members
+        run: git -C rust apply ../tooling/browser-toolchain/riwl-root-exported-archive-members.patch
+
+      - name: Install WASI SDK 32
+        working-directory: rust
+        run: |
+          curl -fL -o wasi-sdk.tar.gz \
+            https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-32/wasi-sdk-32.0-x86_64-linux.tar.gz
+          tar -xzf wasi-sdk.tar.gz
+          rm wasi-sdk.tar.gz
+          echo "WASI_SDK_PATH=$PWD/wasi-sdk-32.0-x86_64-linux" >> "$GITHUB_ENV"
+          echo "WASI_SYSROOT=$PWD/wasi-sdk-32.0-x86_64-linux/share/wasi-sysroot" >> "$GITHUB_ENV"
+
+      - name: Build the metadata-matched unknown-unknown sysroot
+        working-directory: rust
+        run: >-
+          env -u GITHUB_ACTIONS -u CI python3 x.py build library
+          --config ../tooling/browser-toolchain/bootstrap.ci-rustc-wasm.toml
+          --target "$TARGET" --stage 1
+
+      - name: Build the patched WASI-hosted rustc
+        working-directory: rust
+        run: >-
+          env -u GITHUB_ACTIONS -u CI python3 x.py build compiler
+          --config ../tooling/browser-toolchain/bootstrap.ci-rustc-wasm.toml
+          --host wasm32-wasip1 --stage 2
+
+      - name: Package the browser sysroot bundle
+        run: |
+          TARGET_LIB="$(find rust/build -type d -path "*/stage1/lib/rustlib/$TARGET/lib" | sort | head -1)"
+          test -n "$TARGET_LIB"
+          test -n "$(find "$TARGET_LIB" -maxdepth 1 -name 'libcore-*.rlib' -print -quit)"
+          node scripts/package-browser-sysroot.mjs \
+            "$TARGET_LIB" "$TARGET" "out/sysroot-$TARGET.bundle"
+          RUSTC_WASM="rust/build/wasm32-wasip1/stage2/bin/rustc.wasm"
+          test -s "$RUSTC_WASM"
+          cp "$RUSTC_WASM" out/rustc-vooya.wasm
+          node -e 'const fs=require("node:fs");const module=new WebAssembly.Module(fs.readFileSync("out/rustc-vooya.wasm"));const forbidden=WebAssembly.Module.imports(module).filter((entry)=>entry.module!=="wasi_snapshot_preview1");if(forbidden.length)throw new Error(`browser rustc has non-WASI imports: ${JSON.stringify(forbidden)}`)'
+
+      - name: Build the macro-free Vooya reactive profile
+        run: |
+          CORE_PACKAGE="$(find node_modules/.pnpm -type d -path '*/node_modules/@vooya/core' -print -quit)"
+          HOST_RUSTC="$(find rust/build -type f -path '*/stage1/bin/rustc' -print -quit)"
+          TARGET_LIB="$(find rust/build -type d -path "*/stage1/lib/rustlib/$TARGET/lib" | sort | head -1)"
+          TARGET_SYSROOT="$(dirname "$(dirname "$(dirname "$(dirname "$TARGET_LIB")")")")"
+          test -n "$CORE_PACKAGE"
+          test -x "$HOST_RUSTC"
+          test -d "$TARGET_SYSROOT"
+          mkdir -p work/vooya-core work/vooya-reactive-deps
+          cp -R "$CORE_PACKAGE"/. work/vooya-core
+          patch -d work/vooya-core -p1 < tooling/browser-toolchain/vooya-core-dom-feature.patch
+          "$HOST_RUSTC" work/vooya-core/rust/src/lib.rs \
+            --crate-name vooya_core --edition=2024 --crate-type=rlib \
+            --target "$TARGET" --sysroot "$TARGET_SYSROOT" \
+            -Cmetadata=vooya_browser_reactive -Copt-level=3 \
+            -o work/vooya-reactive-deps/libvooya_core-browser-reactive.rlib
+          node scripts/package-browser-dependencies.mjs \
+            work/vooya-reactive-deps "$TARGET" out/vooya-reactive-dependencies.bundle
+
+          "$HOST_RUSTC" tooling/browser-toolchain/vooya-bindgen-scaffold.rs \
+            --crate-name vooya_bindgen_scaffold --edition=2024 --crate-type=rlib \
+            --target "$TARGET" --sysroot "$TARGET_SYSROOT" \
+            -Cmetadata=vooya_bindgen_scaffold_0_2_115 -Copt-level=3 \
+            -o work/vooya-reactive-deps/libvooya_bindgen_scaffold-browser.rlib
+          node scripts/package-browser-dependencies.mjs \
+            work/vooya-reactive-deps "$TARGET" out/vooya-gate-1-97-dependencies.bundle \
+            'libvooya_core-,libvooya_bindgen_scaffold-'
+
+      - name: Build the controlled Gate 2 DOM profile
+        run: |
+          CORE_PACKAGE="$(find node_modules/.pnpm -type d -path '*/node_modules/@vooya/core' -print -quit)"
+          HOST_RUSTC="$(find rust/build -type f -path '*/stage1/bin/rustc' -print -quit)"
+          TARGET_LIB="$(find rust/build -type d -path "*/stage1/lib/rustlib/$TARGET/lib" | sort | head -1)"
+          TARGET_SYSROOT="$(dirname "$(dirname "$(dirname "$(dirname "$TARGET_LIB")")")")"
+          test -n "$CORE_PACKAGE"
+          test -x "$HOST_RUSTC"
+          test -d "$TARGET_SYSROOT"
+          scripts/build-browser-dom-dependencies.sh \
+            "$HOST_RUSTC" "$TARGET_SYSROOT" "$CORE_PACKAGE" \
+            out/vooya-gate-2-dom-dependencies.bundle
+
+      - name: Build the browser-resident wasm-bindgen command
+        run: |
+          cargo build --locked --release --target wasm32-wasip1 \
+            --manifest-path tooling/browser-toolchain/wasm-bindgen-wasi/Cargo.toml
+          cp tooling/browser-toolchain/wasm-bindgen-wasi/target/wasm32-wasip1/release/vooya-wasm-bindgen-wasi.wasm \
+            out/vooya-wasm-bindgen-wasi.wasm
+          sha256sum \
+            out/rustc-vooya.wasm \
+            out/sysroot-$TARGET.bundle \
+            out/vooya-reactive-dependencies.bundle \
+            out/vooya-gate-1-97-dependencies.bundle \
+            out/vooya-gate-2-dom-dependencies.bundle \
+            out/vooya-wasm-bindgen-wasi.wasm > out/SHA256SUMS
+
+      - name: Upload immutable candidate assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-rustc-${{ env.TARGET }}-${{ env.VOOYA_RUST_REF }}
+          path: |
+            out/rustc-vooya.wasm
+            out/sysroot-${{ env.TARGET }}.bundle
+            out/sysroot-${{ env.TARGET }}.bundle.json
+            out/vooya-reactive-dependencies.bundle
+            out/vooya-reactive-dependencies.bundle.json
+            out/vooya-gate-1-97-dependencies.bundle
+            out/vooya-gate-1-97-dependencies.bundle.json
+            out/vooya-gate-2-dom-dependencies.bundle
+            out/vooya-gate-2-dom-dependencies.bundle.json
+            out/vooya-wasm-bindgen-wasi.wasm
+            out/SHA256SUMS
+          retention-days: 14

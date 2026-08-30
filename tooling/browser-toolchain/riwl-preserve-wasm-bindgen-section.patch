@@ -1,0 +1,86 @@
+diff --git a/compiler/rustc_codegen_cranelift/riwl/src/link.rs b/compiler/rustc_codegen_cranelift/riwl/src/link.rs
+index 5b1249ed473..dc4a6ccf828 100644
+--- a/compiler/rustc_codegen_cranelift/riwl/src/link.rs
++++ b/compiler/rustc_codegen_cranelift/riwl/src/link.rs
+@@ -777,6 +777,27 @@ fn add_object_symbols(
+         e.section(11, &p);
+     }
+ 
++    // wasm-bindgen's linker section is append-only metadata: each object may
++    // contribute a fragment and wasm-bindgen consumes their concatenation.
++    let wasm_bindgen_len: usize = included
++        .iter()
++        .flat_map(|object| &object.wasm_bindgen_sections)
++        .map(Vec::len)
++        .sum();
++    if wasm_bindgen_len > 0 {
++        let mut p = Vec::with_capacity(
++            "__wasm_bindgen_unstable".len() + wasm_bindgen_len + 5,
++        );
++        write_name(&mut p, "__wasm_bindgen_unstable");
++        for fragment in included
++            .iter()
++            .flat_map(|object| &object.wasm_bindgen_sections)
++        {
++            p.extend_from_slice(fragment);
++        }
++        e.section(0, &p);
++    }
++
+     mark("emit", &mut t_last);
+     if timings_on {
+         let mut line = format!("riwl-timing: total_ms={}", t_start.elapsed().as_millis());
+@@ -806,6 +827,7 @@ fn clone_object(o: &InputObject) -> InputObject {
+         code_relocs: o.code_relocs.clone(),
+         data_relocs: o.data_relocs.clone(),
+         init_funcs: o.init_funcs.clone(),
++        wasm_bindgen_sections: o.wasm_bindgen_sections.clone(),
+     }
+ }
+ 
+diff --git a/compiler/rustc_codegen_cranelift/riwl/src/object.rs b/compiler/rustc_codegen_cranelift/riwl/src/object.rs
+index 9a011e0d8d2..0944bada799 100644
+--- a/compiler/rustc_codegen_cranelift/riwl/src/object.rs
++++ b/compiler/rustc_codegen_cranelift/riwl/src/object.rs
+@@ -93,6 +93,10 @@ pub struct InputObject {
+     pub data_relocs: Vec<RelocEntry>,
+     /// (priority, symbol index) from WASM_INIT_FUNCS.
+     pub init_funcs: Vec<(u32, u32)>,
++    /// Payloads from `__wasm_bindgen_unstable` custom sections. wasm-bindgen
++    /// emits one fragment per linked object and expects the final linker to
++    /// concatenate fragments with the same section name.
++    pub wasm_bindgen_sections: Vec<Vec<u8>>,
+ }
+ 
+ impl InputObject {
+@@ -116,6 +120,7 @@ pub fn parse(name: &str, bytes: &[u8]) -> Result<InputObject> {
+         let mut code_relocs = Vec::new();
+         let mut data_relocs = Vec::new();
+         let mut init_funcs = Vec::new();
++        let mut wasm_bindgen_sections = Vec::new();
+         // Section ordinal -> is it code / data (for reloc target resolution).
+         let mut section_kinds: Vec<u8> = Vec::new(); // wasm section id per ordinal
+         let mut code_section_start = 0usize;
+@@ -349,9 +354,12 @@ struct RawSym {
+                             // debug-section relocs: sections dropped, relocs too.
+                             _ => {}
+                         }
++                    } else if c.name() == "__wasm_bindgen_unstable" {
++                        wasm_bindgen_sections.push(c.data().to_vec());
+                     }
+-                    // all other custom sections (name/producers/target_features/
+-                    // .debug_*) are dropped.
++                    // All other custom sections (name/producers/target_features/
++                    // .debug_*) are dropped. wasm-bindgen metadata is the one
++                    // runtime-significant exception needed by browser builds.
+                 }
+                 _ => {}
+             }
+@@ -504,6 +512,7 @@ fn with_defined(mut self, defined: bool) -> RawSym {
+             code_relocs,
+             data_relocs,
+             init_funcs,
++            wasm_bindgen_sections,
+         })
+     }
+ }

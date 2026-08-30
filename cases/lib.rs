@@ -8,3 +8,6 @@ pub mod rolldown_summary;
 
 #[path = "examples/scatter-plot/src/ScatterPlot.rs"]
 pub mod scatter_plot;
+
+#[path = "data/log-atlas/src/LogAtlas.rs"]
+pub mod log_atlas;

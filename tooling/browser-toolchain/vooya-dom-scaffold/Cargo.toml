@@ -1,0 +1,16 @@
+[package]
+name = "vooya-gate-two-dom-scaffold"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+path = "../vooya-dom-scaffold.rs"
+
+[dependencies]
+js-sys = "=0.3.92"
+wasm-bindgen = "=0.2.115"
+web-sys = { version = "=0.3.92", features = ["Element"] }
+vooya-core = { path = "../../../node_modules/.pnpm/@vooya+core@0.1.0-alpha.10/node_modules/@vooya/core/rust" }
+
+[workspace]

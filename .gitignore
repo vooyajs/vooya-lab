@@ -5,3 +5,6 @@ playwright-report
 test-results
 .DS_Store
 .playwright-cli
+public/toolchain/*.local.bundle
+public/toolchain/*.local.wasm
+tooling/browser-toolchain/wasm-bindgen-wasi/target/

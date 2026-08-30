@@ -1,0 +1,24 @@
+# Local evidence build for the target libraries consumed by artifacts-test-7.
+# The browser compiler itself is WASI-hosted; the target rlibs are intentionally
+# produced by an exact-revision native stage-1 compiler, matching the upstream
+# workflow's LLVM-built target-library strategy.
+profile = "compiler"
+change-id = 9999999
+
+[llvm]
+download-ci-llvm = true
+
+[rust]
+codegen-backends = ["llvm"]
+deny-warnings = false
+llvm-tools = false
+llvm-bitcode-linker = false
+debug = false
+debuginfo-level = 0
+
+[build]
+docs = false
+extended = false
+tools = []
+host = ["aarch64-apple-darwin"]
+target = ["wasm32-unknown-unknown"]

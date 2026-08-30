@@ -1,71 +1,55 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
 import { RouterLink } from "vue-router";
-import { galleryCategories, galleryEntries } from "../gallery/registry";
-import GallerySidebar from "../components/GallerySidebar.vue";
-import GalleryRail from "../components/GalleryRail.vue";
-import ScatterPlot from "@lab-cases/examples/scatter-plot/src/ScatterPlot.rs";
+import { registeredCases } from "../cases/registry";
 
-const categories = galleryCategories;
-const activeCategory = ref<(typeof categories)[number]>("All");
-const query = ref("");
-const filteredEntries = computed(() => galleryEntries.filter((entry) => {
-  const inCategory = activeCategory.value === "All" || entry.category === activeCategory.value;
-  const search = query.value.trim().toLowerCase();
-  const matchesSearch = !search || [entry.name, entry.summary, entry.category, ...entry.tags].join(" ").toLowerCase().includes(search);
-  return inCategory && matchesSearch;
-}));
+const publicCases = registeredCases.filter((entry) => entry.manifest.portfolioClass !== "experiment");
+const portfolio = [
+  { index: "01", title: "Log Atlas", kind: "ECOSYSTEM PORT", summary: "Parse, index, and search large logs with mature Rust crates while the host owns filters and accessible result views.", tone: "acid", route: "/cases/data/log-atlas", status: "LIVE FLAGSHIP" },
+  { index: "02", title: "Mesh Clinic", kind: "CPU + GPU", summary: "Rust validates and repairs irregular topology; WebGPU renders the result. The boundary is the product.", tone: "violet", status: "PROPOSAL · DISCUSSION #104" },
+  { index: "03", title: "Workflow Replay", kind: "STATE MACHINE", summary: "Replay deterministic domain state locally and inspect every transition without moving the application shell into WASM.", tone: "cyan", status: "PROPOSAL · DISCUSSION #104" },
+  { index: "04", title: "Source Surgeon", kind: "DEVELOPER TOOL", summary: "Reuse parser and AST ecosystems in the browser, then return structured edits instead of a black-box transform.", tone: "hot", status: "PROPOSAL · DISCUSSION #104" },
+  { index: "05", title: "Vector Tile Forge", kind: "CPU + GPU", summary: "Decode and simplify geospatial data in Rust, then hand compact buffers to the renderer that is best at drawing them.", tone: "violet", status: "PROPOSAL · DISCUSSION #104" },
+];
 </script>
 
 <template>
-  <div class="gallery-docs-layout">
-    <GallerySidebar />
-    <section class="gallery-browser" aria-labelledby="gallery-heading">
-      <div class="gallery-page-title">
-        <div><h1 id="gallery-heading">Browse All</h1><p>Interactive Rust/WASM examples built with Vooya. Open a demo to run it, compare implementations, and read its source.</p></div>
+  <div class="catalog-home">
+    <section class="catalog-hero">
+      <div><span class="catalog-kicker">A CASE LIBRARY FOR RUST ON THE WEB</span><span class="catalog-route">/cases</span></div>
+      <h1>See the effect.<br /><em>Understand the boundary.</em></h1>
+      <div class="catalog-hero-copy">
+        <p>Vooya Lab is where reusable Rust capabilities become copyable web experiences. The visuals earn attention; every case then shows what Rust/WASM owns, what the host keeps, and where a GPU should collaborate.</p>
+        <p><b>{{ publicCases.length }} cases live</b><span>1 flagship live · 4 queued</span><span>Browser compiler: controlled Gate 2</span></p>
       </div>
-      <div class="gallery-toolbar">
-        <label class="gallery-search"><span>⌕</span><input v-model="query" type="search" placeholder="Search demos…" aria-label="Search demos" /></label>
-        <div class="gallery-filters" role="group" aria-label="Filter demos by category">
-          <button v-for="category in categories" :key="category" type="button" :class="{ active: activeCategory === category }" @click="activeCategory = category">{{ category }}</button>
-        </div>
-      </div>
-
-      <div class="gallery-grid">
-        <component
-          :is="entry.route ? RouterLink : 'article'"
-          v-for="entry in filteredEntries"
-          :key="entry.slug"
-          class="gallery-card"
-          :class="{ planned: entry.status === 'planned' }"
-          :to="entry.route"
-        >
-          <div
-            class="gallery-card-visual"
-            :class="{ 'gallery-card-live-preview': entry.slug === 'scatter-plot' }"
-            :data-visual="entry.visual"
-          >
-            <div v-if="entry.slug === 'scatter-plot'" class="card-live-stage" aria-hidden="true">
-              <ScatterPlot :points="24_000" :zoom="0.92" />
-              <span>Rust / WASM · live preview</span>
-            </div>
-            <div v-else-if="entry.visual === 'scatter'" class="card-scatter" aria-hidden="true"><i v-for="index in 24" :key="index" :style="{ '--i': index }"></i></div>
-            <div v-else-if="entry.visual === 'grid'" class="card-grid-lines" aria-hidden="true"><i v-for="index in 8" :key="index"></i></div>
-            <div v-else-if="entry.visual === 'trace'" class="card-traces" aria-hidden="true"><i v-for="index in 7" :key="index" :style="{ '--i': index }"></i></div>
-            <div v-else-if="entry.visual === 'image'" class="card-pixels" aria-hidden="true"></div>
-            <div v-else class="card-terminal" aria-hidden="true"><span>$ build</span><i></i><i></i><i></i><strong>{{ entry.visual }}</strong></div>
-            <span class="gallery-status" :data-status="entry.status">{{ entry.status }}</span>
-          </div>
-          <div class="gallery-card-copy">
-            <p>{{ entry.category }}</p>
-            <h3>{{ entry.name }}</h3>
-            <span>{{ entry.summary }}</span>
-            <div class="gallery-tags"><small v-for="tag in entry.tags" :key="tag">{{ tag }}</small></div>
-          </div>
-        </component>
-      </div>
-      <p v-if="!filteredEntries.length" class="gallery-empty">No demos match that search yet.</p>
     </section>
-    <GalleryRail />
+
+    <section class="catalog-section" aria-labelledby="live-heading">
+      <header><span id="live-heading">01 — Run the proof</span><span>PRECOMPILED · INTERACTIVE</span></header>
+      <div class="live-case-grid">
+        <RouterLink v-for="entry in publicCases" :key="entry.route" :to="entry.route" class="live-case-card">
+          <div class="live-card-field" aria-hidden="true"><i v-for="dot in 36" :key="dot" :style="{ left: `${8 + (dot * 17) % 83}%`, top: `${5 + (dot * 29) % 86}%` }"></i><span>RUST / WASM · LIVE</span></div>
+          <div class="live-card-copy"><span>{{ entry.manifest.portfolioClass }}</span><h2>{{ entry.manifest.title }}</h2><p>{{ entry.manifest.summary }}</p><div><code v-for="tag in entry.manifest.tags" :key="tag">{{ tag }}</code></div></div>
+        </RouterLink>
+      </div>
+    </section>
+
+    <section class="catalog-section" aria-labelledby="portfolio-heading">
+      <header><span id="portfolio-heading">02 — Flagship portfolio</span><span>ATTENTION + DURABLE VALUE</span></header>
+      <div class="portfolio-grid">
+        <article v-for="item in portfolio" :key="item.title" :data-tone="item.tone">
+          <div><span>{{ item.index }}</span><code>{{ item.kind }}</code></div>
+          <h2>{{ item.title }}</h2>
+          <p>{{ item.summary }}</p>
+          <RouterLink v-if="item.route" :to="item.route">OPEN LIVE CASE →</RouterLink>
+          <small v-else>{{ item.status }}</small>
+        </article>
+      </div>
+    </section>
+
+    <section class="catalog-manifesto">
+      <span>THE RULE</span>
+      <p>GPU demos are welcome when the GPU is genuinely the right renderer. Vooya earns its place through ecosystem reuse, irregular CPU work, deterministic state, portability, and a typed lifecycle boundary—not through pretending WASM replaces every part of the web stack.</p>
+      <a href="https://github.com/vooyajs/vooya/discussions/104#discussioncomment-18201895" target="_blank" rel="noreferrer">Read the case strategy ↗</a>
+    </section>
   </div>
 </template>

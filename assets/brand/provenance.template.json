@@ -1,0 +1,35 @@
+{
+  "assetId": "vooya-lab/<slug>",
+  "owner": "shared-brand",
+  "role": "brand",
+  "status": "candidate",
+  "generator": {
+    "tool": "Lovart",
+    "projectId": "",
+    "projectUrl": "",
+    "modelOrMode": ""
+  },
+  "brief": "./vooya-lab-lovart-brief.md",
+  "prompt": "",
+  "references": [
+    {
+      "url": "",
+      "author": "",
+      "capturedAt": "",
+      "principle": "",
+      "usageConstraints": "reference only"
+    }
+  ],
+  "generatedAt": "",
+  "downloadedAt": "",
+  "original": {
+    "path": "",
+    "sha256": ""
+  },
+  "derivatives": [],
+  "review": {
+    "reviewer": "",
+    "decision": "pending",
+    "notes": ""
+  }
+}

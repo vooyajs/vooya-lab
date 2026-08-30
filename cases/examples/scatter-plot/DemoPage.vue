@@ -1,84 +1,90 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { RouterLink } from "vue-router";
-import ScatterPlot from "./src/ScatterPlot.rs";
+import { computed, ref } from "vue";
+import type { LabCaseManifest } from "@vooya-lab/case-schema";
+import { VooyaWorkbench } from "@vooya-lab/ide";
+import manifestData from "./case.json";
 import ScatterBaseline from "./ScatterBaseline.vue";
-import { VooyaIde } from "@vooya-lab/ide";
-import GallerySidebar from "@lab-web/components/GallerySidebar.vue";
-import GalleryRail from "@lab-web/components/GalleryRail.vue";
+import ScatterPlot from "./src/ScatterPlot.rs";
 import { sourceFiles } from "./sourceFiles";
 import "./src/ScatterPlot.css";
 
-const view = ref<"preview" | "source">("preview");
+const manifest = manifestData as LabCaseManifest;
 const implementation = ref<"vooya" | "javascript">("vooya");
 const points = ref(150_000);
 const zoom = ref(1);
+const copyState = ref("Copy component");
 const rustEntryPath = "cases/examples/scatter-plot/src/ScatterPlot.rs";
+const rustSource = computed(() => sourceFiles.find((file) => file.path === rustEntryPath)?.content ?? "");
 
+function resetPreview() {
+  points.value = 150_000;
+  zoom.value = 1;
+  implementation.value = "vooya";
+}
+
+async function copyComponent() {
+  await navigator.clipboard.writeText(rustSource.value);
+  copyState.value = "Copied";
+  window.setTimeout(() => { copyState.value = "Copy component"; }, 1600);
+}
 </script>
 
 <template>
-  <div class="demo-page">
-    <GallerySidebar />
+  <article class="case-detail">
+    <header class="case-intro">
+      <div><span class="case-kicker">{{ manifest.portfolioClass }} · {{ manifest.proof.reusedCrates.join(' + ') }}</span><span class="case-route">/cases/{{ manifest.category }}/{{ manifest.slug }}</span></div>
+      <div class="case-title-row"><h1>R-tree <em>scatter</em></h1><span>LIVE FOUNDATION</span></div>
+      <div class="case-intro-copy">
+        <p>{{ manifest.summary }}</p>
+        <p><b>WHY VOOYA</b>Reuse a production Rust spatial-index crate behind typed props and a component-owned lifecycle, while Vue keeps the product interface.</p>
+      </div>
+    </header>
 
-    <main class="demo-content">
-      <header class="demo-title">
-        <div><p class="demo-breadcrumb"><RouterLink to="/">Gallery</RouterLink> / Graphics</p><h1>R-tree Scatter Explorer</h1></div>
-      </header>
-
-      <div class="demo-action-row">
-        <div class="demo-workbench-tabs" role="tablist" aria-label="Demo view">
-          <button type="button" role="tab" :aria-selected="view === 'preview'" :class="{ active: view === 'preview' }" @click="view = 'preview'">◉ Preview</button>
-          <button type="button" role="tab" :aria-selected="view === 'source'" :class="{ active: view === 'source' }" @click="view = 'source'">‹› Code</button>
+    <div class="case-content">
+      <div class="case-section-title"><span>01 — Interactive preview</span><span>PRECOMPILED WASM · EDITABLE = FALSE</span></div>
+      <section class="case-preview" aria-label="Interactive R-tree scatter preview">
+        <div class="preview-runtime"><b>NEAREST-NEIGHBOR ENGINE</b><span>{{ implementation === 'vooya' ? 'Rust rstar R-tree via Vooya' : 'JavaScript linear scan' }}</span></div>
+        <div class="preview-stage">
+          <ScatterPlot v-if="implementation === 'vooya'" :points="points" :zoom="zoom" />
+          <ScatterBaseline v-else :points="points" :zoom="zoom" />
+          <div class="preview-watermark"><b>PROOF</b><span>Move across the field to query the nearest point.</span></div>
         </div>
-        <a href="https://github.com/vooyajs/vooya-lab/tree/main/cases/examples/scatter-plot" target="_blank" rel="noreferrer">View source ↗</a>
+        <div class="preview-controls">
+          <div class="implementation-switch" role="group" aria-label="Choose implementation">
+            <button type="button" :aria-pressed="implementation === 'javascript'" @click="implementation = 'javascript'">JAVASCRIPT</button>
+            <button type="button" :aria-pressed="implementation === 'vooya'" @click="implementation = 'vooya'">VOOYA · WASM</button>
+          </div>
+          <label><span>POINTS <output>{{ points.toLocaleString() }}</output></span><input v-model.number="points" type="range" min="50000" max="200000" step="10000" /></label>
+          <label><span>ZOOM <output>{{ Math.round(zoom * 100) }}%</output></span><input v-model.number="zoom" type="range" min="0.45" max="3" step="0.05" /></label>
+          <button type="button" @click="resetPreview">RESET</button>
+        </div>
+      </section>
+      <div class="under-preview">
+        <p><b>Honest comparison.</b> A mature Rust R-tree is compared with a transparent JavaScript scan; this is not a universal Rust-versus-JavaScript benchmark.</p>
+        <div><a href="https://github.com/vooyajs/vooya-lab/tree/main/cases/examples/scatter-plot" target="_blank" rel="noreferrer">View source ↗</a><button type="button" @click="copyComponent">{{ copyState }}</button></div>
       </div>
 
-      <section class="demo-workbench">
-
-        <template v-if="view === 'preview'">
-          <div class="implementation-bar">
-            <div><span>Nearest-neighbor engine</span><strong>{{ implementation === 'vooya' ? 'Rust rstar R-tree via Vooya' : 'JavaScript linear scan' }}</strong></div>
-            <div class="implementation-switch" role="group" aria-label="Choose implementation">
-              <button type="button" :class="{ active: implementation === 'javascript' }" @click="implementation = 'javascript'">JavaScript</button>
-              <button type="button" :class="{ active: implementation === 'vooya' }" @click="implementation = 'vooya'">Vooya · WASM</button>
-            </div>
-          </div>
-          <div class="demo-stage">
-            <ScatterPlot v-if="implementation === 'vooya'" :points="points" :zoom="zoom" />
-            <ScatterBaseline v-else :points="points" :zoom="zoom" />
-          </div>
-          <p class="comparison-note">Move across the plot to query the nearest point. The comparison intentionally contrasts a mature Rust spatial-index crate with a straightforward JavaScript scan; timings describe this browser session, not every Rust or JavaScript program.</p>
-        </template>
-        <VooyaIde v-else title="Example source" :files="sourceFiles" :active-path="rustEntryPath" readonly height="590px" />
+      <div class="case-section-title"><span>02 — Why this boundary?</span><span>CPU INDEX · HOST UI</span></div>
+      <section class="case-boundary" aria-label="Host, Rust, and GPU responsibility boundary">
+        <div class="boundary-lead"><strong>ECOSYSTEM REUSE</strong><p>{{ manifest.question }} The value is not “WASM draws dots faster”; it is keeping <code>rstar</code>, its data model, and pointer-query loop inside one bounded component.</p></div>
+        <div class="boundary-flow">
+          <section><span>01 · VUE / HOST</span><h2>Product surface</h2><p>{{ manifest.proof.hostOwns.join(' · ') }}</p></section>
+          <section><span>02 · RUST / WASM</span><h2>Spatial capability</h2><p>{{ manifest.proof.rustOwns.join(' · ') }}</p></section>
+          <section><span>03 · GPU</span><h2>Not required here</h2><p>Canvas 2D presents the points. A future GPU renderer could collaborate without taking ownership of the R-tree.</p></section>
+        </div>
+        <div class="boundary-foot"><span><b>Crossing:</b> {{ manifest.proof.boundary.inputs.join(' + ') }} → {{ manifest.proof.boundary.outputs.join(' + ') }}</span><span>{{ manifest.proof.boundary.updatePattern }}</span></div>
       </section>
 
-      <template v-if="view === 'preview'">
-        <h2 class="customize-heading">Customize</h2>
-        <div class="demo-controls">
-          <label><span>Points <output>{{ points.toLocaleString() }}</output></span><input v-model.number="points" type="range" min="50000" max="200000" step="10000" /></label>
-          <label><span>Zoom <output>{{ Math.round(zoom * 100) }}%</output></span><input v-model.number="zoom" type="range" min="0.45" max="3" step="0.05" /></label>
-          <button type="button" @click="points = 150_000; zoom = 1">Reset</button>
-        </div>
-      </template>
-
-      <section class="demo-documentation">
-        <h2>About</h2>
-        <p>This example builds a spatial index over up to 200,000 deterministic points and performs a nearest-neighbor query whenever the pointer moves across the plot. Vue still owns the page and controls; the Rust component owns the indexed capability and its Canvas surface.</p>
-        <p>The Vooya implementation reuses the production Rust <code>rstar</code> crate instead of porting its R-tree into application JavaScript. The baseline is intentionally a transparent linear scan. This demonstrates library reuse and integration cost—not a claim that every Rust implementation beats an optimized JavaScript spatial index.</p>
-
-        <h2>Props</h2>
-        <div class="props-table-wrap">
-          <table class="props-table">
-            <thead><tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
-            <tbody>
-              <tr><td><code>points</code></td><td><code>number</code></td><td><code>150000</code></td><td>Number of deterministic points rendered on the canvas.</td></tr>
-              <tr><td><code>zoom</code></td><td><code>number</code></td><td><code>1</code></td><td>Canvas zoom factor, clamped between 0.45 and 5.</td></tr>
-            </tbody>
-          </table>
-        </div>
+      <div class="case-section-title"><span>03 — Source workbench</span><span>{{ sourceFiles.length }} FILES · READ ONLY</span></div>
+      <section class="source-workbench" aria-label="Read-only source workbench">
+        <div class="workbench-heading"><div><span>REAL CASE UNIT</span><h2>Inspect every layer</h2></div><p>The Rust artifact is precompiled. Props and preview stay interactive; source editing remains gated until the browser compiler produces real artifacts.</p></div>
+        <VooyaWorkbench title="R-tree scatter case" :files="sourceFiles" :entry-path="rustEntryPath" :editable="manifest.execution.editable" :execution-mode="manifest.execution.mode" height="590px" />
       </section>
-    </main>
-    <GalleryRail />
-  </div>
+
+      <section class="case-notes">
+        <div><span>ABOUT</span><p>This case builds an index over up to 200,000 deterministic points and performs nearest-neighbor queries on pointer movement. The Rust component owns its Canvas surface and disposal; the host owns page state and comparison controls.</p></div>
+        <div><span>ALTERNATIVES CONSIDERED</span><p>{{ manifest.proof.alternatives.join(' · ') }}</p></div>
+      </section>
+    </div>
+  </article>
 </template>

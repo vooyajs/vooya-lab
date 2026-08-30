@@ -17,6 +17,14 @@ contract visible through real, explorable examples.
 - [Vooya documentation](https://vooyajs.com/) — authoring contracts, Rust-file guidance, and compatibility boundaries;
 - [Open the hosted lab](https://vooyajs.github.io/vooya-lab/) — interactive browser cases and live integration evidence;
 - [Vooya Lab source](https://github.com/vooyajs/vooya-lab) — case implementations and deployment configuration.
+- [Lab architecture](./docs/lab-architecture.md) — product, repository, and agent contract.
+- [Case portfolio strategy](./docs/case-portfolio.md) — case selection rubric and evidence plan.
+- [Case specification standard](./docs/case-spec.md) — independent, copyable case-unit contract.
+- [Visual identity and asset workflow](./docs/visual-identity.md) — brand system, Lovart research modes, logo exploration, and generated-asset provenance.
+- [Browser compiler exploration](./docs/browser-compiler.md) — protocol and feasibility gates.
+- [Browser compiler Gate 0](./docs/browser-compiler-gate-0.md) — pinned browser-hosted rustc candidate, payload inventory, and open measurements.
+- [Browser compiler Gate 1](./docs/browser-compiler-gate-1.md) — real in-browser rustc evidence and the remaining Vooya gaps.
+- [Browser compiler Gate 2 working report](./docs/browser-compiler-gate-2.md) — evidence for a controlled browser-built Vooya DOM component, its exact toolchain/profile boundary, lifecycle tests, payload cost, and remaining publication and security gaps.
 
 Every case marked `live` must include a Rust component or store compiled through
 Vooya. Planned cards may communicate the gallery roadmap, but they do not link
@@ -39,7 +47,7 @@ cases/
   wasm/
 ```
 
-The public site maps component demos to `/showcase/<case>` and browser-tooling
+The public site derives component routes as `/cases/<category>/<slug>` and browser-tooling
 experiments to routes such as `/bundlers/rspack`.
 
 ## Local development
@@ -87,3 +95,12 @@ binary from `dist/assets`; Rolldown, Vooya, and the application remain in Pages.
 
 For the repeatable Cloudflare setup, GitHub Actions workflow, quota guard, and
 rollback procedure, see [docs/cloudflare-wasm-assets.md](docs/cloudflare-wasm-assets.md).
+
+## Architecture
+
+Before changing the gallery information architecture, case layout, WebIDE,
+compiler experiments, or shared packages, read
+[docs/lab-architecture.md](docs/lab-architecture.md). It defines the Lab's
+outcome-first product direction, filesystem-derived case routes, precompiled
+WASM default, `editable` capability boundary, package extraction rules, and
+development constraints for maintainers and coding agents.

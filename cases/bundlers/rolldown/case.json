@@ -3,8 +3,34 @@
   "category": "bundlers",
   "slug": "rolldown",
   "title": "Rolldown Browser",
+  "summary": "Edit and bundle a small JavaScript workspace with Rolldown Browser while a precompiled Vooya component presents the build summary.",
+  "tags": ["Rolldown", "Worker", "browser toolchain", "cross-origin isolation"],
   "status": "experimental",
+  "portfolioClass": "experiment",
+  "question": "Can an external browser bundler Worker and a Vooya Rust summary coexist behind explicit environment and lifecycle boundaries?",
+  "spec": "./SPEC.md",
   "vooyaComponent": "./src/RolldownSummary.rs",
   "runner": "./src/rolldown.worker.ts",
-  "interactions": ["edit source", "run browser build", "inspect emitted files"]
+  "interactions": ["edit source", "run browser build", "inspect emitted files"],
+  "execution": {
+    "mode": "precompiled",
+    "editable": false
+  },
+  "distribution": {
+    "mode": "demo-only",
+    "files": ["./src/RolldownSummary.rs", "./src/RolldownSummary.css", "./src/rolldown.worker.ts"]
+  },
+  "proof": {
+    "hostOwns": ["IDE source editing", "build invocation", "emitted-file presentation"],
+    "rustOwns": ["Vooya summary component rendered from precompiled output"],
+    "gpuRelationship": "not-applicable",
+    "boundary": {
+      "inputs": ["browser bundler status and build summary props"],
+      "outputs": ["Vooya-rendered summary surface"],
+      "updatePattern": "The host translates Worker results into coarse summary updates."
+    },
+    "reusedCrates": [],
+    "vooyaContracts": ["precompiled Rust component", "host adapter lifecycle"],
+    "alternatives": ["plain Vue summary", "direct Rolldown Browser UI without Vooya"]
+  }
 }

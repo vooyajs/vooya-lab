@@ -1,0 +1,46 @@
+diff --git a/compiler/rustc_codegen_cranelift/riwl/src/link.rs b/compiler/rustc_codegen_cranelift/riwl/src/link.rs
+--- a/compiler/rustc_codegen_cranelift/riwl/src/link.rs
++++ b/compiler/rustc_codegen_cranelift/riwl/src/link.rs
+@@ -177,16 +177,32 @@
+     let mut pulled: Vec<bool> = vec![false; lazy.len()];
+     loop {
+         let mut want: Option<usize> = None;
+-        'scan: for obj in &included {
+-            for s in &obj.symbols {
+-                if s.is_undefined()
+-                    && !s.name.is_empty()
+-                    && !global.contains_key(&s.name)
+-                {
+-                    if let Some(&li) = lazy_index.get(&s.name) {
+-                        if !pulled[li] {
+-                            want = Some(li);
+-                            break 'scan;
++        // wasm-ld treats explicitly exported symbols as archive roots. rustc
++        // uses this for wasm-bindgen descriptor functions, which may otherwise
++        // have no relocation from an already included member.
++        for name in &opts.exports {
++            if global.contains_key(name) {
++                continue;
++            }
++            if let Some(&li) = lazy_index.get(name) {
++                if !pulled[li] {
++                    want = Some(li);
++                    break;
++                }
++            }
++        }
++        if want.is_none() {
++            'scan: for obj in &included {
++                for s in &obj.symbols {
++                    if s.is_undefined()
++                        && !s.name.is_empty()
++                        && !global.contains_key(&s.name)
++                    {
++                        if let Some(&li) = lazy_index.get(&s.name) {
++                            if !pulled[li] {
++                                want = Some(li);
++                                break 'scan;
++                            }
+                         }
+                     }
+                 }

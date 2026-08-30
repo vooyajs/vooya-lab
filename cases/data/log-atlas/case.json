@@ -1,0 +1,38 @@
+{
+  "$schema": "../../case.schema.json",
+  "category": "data",
+  "slug": "log-atlas",
+  "title": "Log Atlas",
+  "summary": "Keep a trace corpus inside Rust/WASM, run regex queries and compact aggregations locally, then explore the result as a dense waterfall without uploading data.",
+  "tags": ["regex", "trace", "local-first", "Vue", "WASM"],
+  "status": "live",
+  "portfolioClass": "flagship",
+  "question": "Can Vooya keep a long-lived trace model behind a typed component boundary while Vue sends coarse query controls instead of shuttling every row through JavaScript?",
+  "spec": "./SPEC.md",
+  "vooyaComponent": "./src/LogAtlas.rs",
+  "host": "./DemoPage.vue",
+  "interactions": ["query spans with Rust regex", "filter by duration", "change time window", "reset the view"],
+  "evidence": ["Rust-file component compiled by the Lab Vooya entry", "regex executes against a WASM-owned trace corpus", "Vue prop changes update the waterfall", "focused browser test covers query and reset"],
+  "execution": {
+    "mode": "precompiled",
+    "editable": false
+  },
+  "distribution": {
+    "mode": "demo-only",
+    "files": ["./src/LogAtlas.rs", "./src/LogAtlas.css", "./DemoPage.vue", "./sourceFiles.ts", "./index.ts"],
+    "dependencies": ["regex = 1.12.2", "@vooya/vue = 0.1.0-alpha.10"]
+  },
+  "proof": {
+    "hostOwns": ["query and time-window controls", "accessible explanation", "gallery page state"],
+    "rustOwns": ["trace parsing", "long-lived indexed corpus", "regex filtering", "aggregation", "waterfall projection"],
+    "gpuRelationship": "not-applicable",
+    "boundary": {
+      "inputs": ["query string", "minimum duration", "time-window size"],
+      "outputs": ["component-owned summary and at most 32 visible waterfall rows"],
+      "updatePattern": "Three coarse props cross on user actions; the 1,800-span corpus and row filtering stay inside Rust/WASM."
+    },
+    "reusedCrates": ["regex"],
+    "vooyaContracts": ["Rust-file build", "typed props", "Vue adapter", "scoped styles", "mount/update/disposal"],
+    "alternatives": ["plain TypeScript parser and index", "custom wasm-bindgen wrapper", "server-side log upload and query"]
+  }
+}

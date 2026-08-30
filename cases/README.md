@@ -14,7 +14,8 @@ new lab cases.
 
 ```text
 cases/examples/<demo>/
-  index.ts             # gallery registration
+  SPEC.md             # rationale, boundary proof, acceptance and known gaps
+  index.ts             # optional case-local public exports
   case.json            # portable case metadata
   DemoPage.vue         # preview, controls, source and API docs
   <Name>Baseline.vue   # optional non-Vooya comparison
@@ -23,15 +24,22 @@ cases/examples/<demo>/
     <Name>.css
 ```
 
-The web application discovers entries through `src/gallery/registry.ts` and
-does not import demo internals. Bundler experiments use a separate registry and
-never appear as Gallery components.
+The web application discovers `case.json` and optional `DemoPage.vue` modules
+through one build-time filesystem glob. The manifest path generates
+`/cases/<category>/<slug>`; no case registration or public route is maintained
+by hand. Bundler experiments remain available at direct routes and never appear
+as public Gallery components.
 
-`case.json` follows [`case.schema.json`](./case.schema.json). Every case declares
-its category, slug, title, lifecycle status, Rust component, and the user
-interactions it is meant to demonstrate. A case is only marked `live` when the
-Rust component has gone through the lab Vooya build path and the browser
-behavior has an end-to-end assertion.
+`SPEC.md` and `case.json` form one independent case specification unit. Read
+[`docs/case-spec.md`](../docs/case-spec.md) and [`AGENTS.md`](./AGENTS.md) before
+adding or changing a case. `case.json` follows
+[`case.schema.json`](./case.schema.json) and projects the spec into registry,
+execution, distribution, and host/Rust/GPU proof fields.
+
+A case is only marked `live` when the Rust component has gone through the Lab
+Vooya build path and the browser behavior has focused evidence. A case is only
+marked `flagship` when it also passes the portfolio rubric and publicly explains
+**Why this boundary?**
 
 Current categories:
 
@@ -42,3 +50,7 @@ Current categories:
 
 The catalog is deliberately open to future `editors`, `graphics`, `data`, and
 `wasm` categories.
+
+Case detail pages must not import application-owned components or types. They
+compose case-local files with public packages such as `@vooya-lab/ide` and
+`@vooya-lab/case-schema`; the application owns only the surrounding shell.

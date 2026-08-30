@@ -3,8 +3,34 @@
   "category": "bundlers",
   "slug": "rspack",
   "title": "Rspack Browser",
+  "summary": "Edit and bundle a small JavaScript workspace with Rspack Browser while a precompiled Vooya component presents the build summary.",
+  "tags": ["Rspack", "Worker", "browser toolchain", "cross-origin isolation"],
   "status": "experimental",
+  "portfolioClass": "experiment",
+  "question": "Can an external browser bundler Worker and a Vooya Rust summary coexist behind explicit isolation and lifecycle boundaries?",
+  "spec": "./SPEC.md",
   "vooyaComponent": "./src/RspackSummary.rs",
   "runner": "./src/rspack.worker.ts",
-  "interactions": ["edit source", "run browser build", "inspect emitted files"]
+  "interactions": ["edit source", "run browser build", "inspect emitted files"],
+  "execution": {
+    "mode": "precompiled",
+    "editable": false
+  },
+  "distribution": {
+    "mode": "demo-only",
+    "files": ["./src/RspackSummary.rs", "./src/RspackSummary.css", "./src/rspack.worker.ts"]
+  },
+  "proof": {
+    "hostOwns": ["IDE source editing", "build invocation", "emitted-file presentation"],
+    "rustOwns": ["Vooya summary component rendered from precompiled output"],
+    "gpuRelationship": "not-applicable",
+    "boundary": {
+      "inputs": ["browser bundler status and build summary props"],
+      "outputs": ["Vooya-rendered summary surface"],
+      "updatePattern": "The host translates Worker results into coarse summary updates."
+    },
+    "reusedCrates": [],
+    "vooyaContracts": ["precompiled Rust component", "host adapter lifecycle"],
+    "alternatives": ["plain Vue summary", "direct Rspack Browser UI without Vooya"]
+  }
 }

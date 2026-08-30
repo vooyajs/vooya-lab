@@ -3,17 +3,145 @@
   "title": "Vooya Lab case",
   "type": "object",
   "additionalProperties": false,
-  "required": ["category", "slug", "title", "status", "vooyaComponent", "interactions"],
+  "required": [
+    "category",
+    "slug",
+    "title",
+    "summary",
+    "tags",
+    "status",
+    "portfolioClass",
+    "question",
+    "spec",
+    "vooyaComponent",
+    "interactions",
+    "execution",
+    "distribution",
+    "proof"
+  ],
   "properties": {
+    "$schema": { "const": "../../case.schema.json" },
     "category": { "type": "string", "pattern": "^[a-z0-9-]+$" },
     "slug": { "type": "string", "pattern": "^[a-z0-9-]+$" },
     "title": { "type": "string", "minLength": 1 },
+    "summary": { "type": "string", "minLength": 1 },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "cover": { "type": "string", "minLength": 1 },
     "status": { "enum": ["live", "experimental", "catalogued", "planned"] },
+    "portfolioClass": { "enum": ["flagship", "showcase", "foundation", "experiment"] },
+    "question": { "type": "string", "minLength": 1 },
+    "spec": { "const": "./SPEC.md" },
     "vooyaComponent": { "type": "string", "pattern": "^\\./src/[^/]+\\.rs$" },
     "runner": { "type": "string" },
     "host": { "type": "string" },
     "interactions": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
-    "reference": { "type": "string", "format": "uri-reference" },
-    "evidence": { "type": "array", "items": { "type": "string" } }
+    "reference": { "type": "string", "minLength": 1 },
+    "evidence": { "type": "array", "items": { "type": "string" } },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "editable"],
+      "properties": {
+        "mode": { "enum": ["precompiled", "browser-compiler", "remote-compiler"] },
+        "editable": { "type": "boolean" }
+      }
+    },
+    "distribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "files"],
+      "properties": {
+        "mode": { "enum": ["copy", "package", "demo-only"] },
+        "files": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "dependencies": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "installCommand": { "type": "string", "minLength": 1 }
+      }
+    },
+    "proof": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hostOwns",
+        "rustOwns",
+        "gpuRelationship",
+        "boundary",
+        "reusedCrates",
+        "vooyaContracts",
+        "alternatives"
+      ],
+      "properties": {
+        "hostOwns": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "rustOwns": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "gpuRelationship": { "enum": ["alternative", "complement", "not-applicable"] },
+        "boundary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["inputs", "outputs", "updatePattern"],
+          "properties": {
+            "inputs": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "outputs": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "updatePattern": { "type": "string", "minLength": 1 }
+          }
+        },
+        "reusedCrates": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "vooyaContracts": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "alternatives": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "performanceClaim": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["statement", "benchmark"],
+          "properties": {
+            "statement": { "type": "string", "minLength": 1 },
+            "benchmark": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    }
   }
 }

@@ -1,0 +1,38 @@
+{
+  "ok": true,
+  "prompt": "Create a square abstract logo study: a luminous lime V slash cutting through a deep black field, precise vector geometry, no text, high contrast.",
+  "project_id": "71a998818a09463ba1f5aa9c96ac3586",
+  "thread_id": "c5fe3e0e-45f9-4dfd-a902-21612e6ac9dc",
+  "status": "done",
+  "pending_confirmation": null,
+  "artifacts": [
+    {
+      "type": "image",
+      "url": "https://a.lovart.ai/artifacts/agent/bCRXwf9XSQBI9wgI.png"
+    }
+  ],
+  "downloads": [
+    {
+      "path": "./lovart-openapi-test-01.png",
+      "bytes": 1268044,
+      "content_type": "image/png"
+    }
+  ],
+  "project_url": "https://www.lovart.ai/canvas?projectId=71a998818a09463ba1f5aa9c96ac3586",
+  "agent_items": [
+    {
+      "type": "assistant",
+      "text": "Done. The logo study features a sharp, luminous lime V slash with precise vector geometry against a deep black field — clean, high contrast, and ready for refinement if needed."
+    },
+    {
+      "type": "generator",
+      "artifacts": [
+        {
+          "type": "image",
+          "content": "https://a.lovart.ai/artifacts/agent/bCRXwf9XSQBI9wgI.png"
+        }
+      ],
+      "name": "artifacts"
+    }
+  ]
+}

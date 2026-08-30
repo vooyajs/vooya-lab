@@ -156,3 +156,28 @@
   .vooya-ide-workspace { grid-template-columns: 1fr; }
   .vooya-ide-explorer { display: none; }
 }
+
+.vooya-workbench { --workbench-accent: #c8ff3d; border: 1px solid #30363d; background: #0d1117; }
+.vooya-workbench-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 46px; padding: 7px 10px; border-bottom: 1px solid #30363d; color: #8b949e; background: #12171e; font: 8px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.vooya-workbench-toolbar > div { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.vooya-workbench-toolbar strong { color: #c9d1d9; font-weight: 500; }
+.vooya-workbench-toolbar small { min-width: 0; overflow: hidden; color: #8b949e; text-overflow: ellipsis; white-space: nowrap; }
+.vooya-workbench-signal { width: 7px; height: 7px; border-radius: 50%; background: #6e7681; }
+.vooya-workbench[data-editable="true"] .vooya-workbench-signal { background: var(--workbench-accent); box-shadow: 0 0 10px rgba(200,255,61,.5); }
+.vooya-workbench-toolbar button { min-height: 28px; padding: 0 9px; border: 1px solid #484f58; color: #c9d1d9; background: #161b22; cursor: pointer; font: 8px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.vooya-workbench-toolbar button:last-child { color: #071009; border-color: var(--workbench-accent); background: var(--workbench-accent); }
+.vooya-workbench-toolbar button:disabled { color: #6e7681; border-color: #30363d; background: #161b22; cursor: not-allowed; }
+.vooya-workbench > .vooya-ide { border: 0; border-radius: 0; }
+.vooya-workbench-output { min-height: 70px; padding: 11px 12px; border-top: 1px solid #30363d; color: #8b949e; background: #0a0e13; font: 8px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.vooya-workbench-output > div { display: flex; gap: 7px; color: #6e7681; }
+.vooya-workbench-output > div b { color: #c9d1d9; font-weight: 400; }
+.vooya-workbench-output p { margin: 8px 0 0; }
+.vooya-workbench-output ol { display: grid; gap: 6px; margin: 9px 0 0; padding: 0; list-style: none; }
+.vooya-workbench-output li { display: grid; grid-template-columns: 55px minmax(130px, auto) minmax(0, 1fr); gap: 8px; }
+.vooya-workbench-output li b { color: #ff7b72; font-weight: 500; text-transform: uppercase; }
+.vooya-workbench-output li[data-severity="warning"] b { color: #d29922; }
+
+@media (max-width: 640px) {
+  .vooya-workbench-toolbar { align-items: flex-start; flex-direction: column; }
+  .vooya-workbench-output li { grid-template-columns: 1fr; }
+}

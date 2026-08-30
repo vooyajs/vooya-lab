@@ -1,4 +1,5 @@
 export { default as VooyaIde } from "./VooyaIde.vue";
+export { default as VooyaWorkbench } from "./VooyaWorkbench.vue";
 export { default as IdeFileTree } from "./IdeFileTree.vue";
 export type { IdeFile, IdeSourceEnumerationOptions, IdeTreeNode } from "./types";
 

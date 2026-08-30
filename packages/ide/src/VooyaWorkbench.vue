@@ -1,0 +1,131 @@
+<script setup lang="ts">
+import { computed, onBeforeUnmount, ref, watch } from "vue";
+import {
+  createCompileRequest,
+  type ArtifactManifest,
+  type CompilerDiagnostic,
+  type CompilerEvent,
+  type CompilerRunner,
+  type CompilerStage,
+  isTerminalStage,
+} from "@vooya-lab/compiler-protocol";
+import VooyaIde from "./VooyaIde.vue";
+import type { IdeFile } from "./types";
+
+const props = withDefaults(defineProps<{
+  files: IdeFile[];
+  entryPath: string;
+  title?: string;
+  editable?: boolean;
+  executionMode?: "precompiled" | "browser-compiler" | "remote-compiler";
+  runner?: CompilerRunner;
+  target?: "wasm32-unknown-unknown" | "wasm32-wasip1";
+  actionLabel?: string;
+  height?: string;
+}>(), {
+  title: "Source workbench",
+  editable: false,
+  executionMode: "precompiled",
+  target: "wasm32-unknown-unknown",
+  actionLabel: "Compile & preview",
+  height: "560px",
+});
+
+const emit = defineEmits<{
+  artifact: [manifest: ArtifactManifest];
+  event: [event: CompilerEvent];
+}>();
+
+const workspace = ref<IdeFile[]>(props.files.map((file) => ({ ...file })));
+const stage = ref<CompilerStage>("idle");
+const requestId = ref("");
+const statusMessage = ref("");
+const diagnostics = ref<CompilerDiagnostic[]>([]);
+
+const canCompile = computed(() => props.editable && props.executionMode === "browser-compiler" && Boolean(props.runner));
+const isRunning = computed(() => stage.value !== "idle" && !isTerminalStage(stage.value));
+const capabilityLabel = computed(() => {
+  if (!props.editable) return "PRECOMPILED · SOURCE LOCKED";
+  if (props.executionMode !== "browser-compiler") return `${props.executionMode.toUpperCase()} · RUNNER REQUIRED`;
+  if (!props.runner) return "BROWSER COMPILER · CAPABILITY GATED";
+  return `${props.runner.id} · ${props.runner.version}`;
+});
+
+function updateFile(path: string, content: string) {
+  const file = workspace.value.find((item) => item.path === path);
+  if (file) file.content = content;
+}
+
+function handleEvent(event: CompilerEvent) {
+  if (event.requestId !== requestId.value) return;
+  emit("event", event);
+  if (event.type === "state") {
+    stage.value = event.stage;
+    statusMessage.value = event.message ?? "";
+  } else if (event.type === "diagnostic") {
+    diagnostics.value.push(event.diagnostic);
+  } else if (event.type === "complete") {
+    stage.value = event.stage;
+    statusMessage.value = event.stage === "succeeded" ? `Compilation succeeded in ${(event.elapsedMs / 1000).toFixed(2)} s` : event.stage === "failed" ? `Compilation failed in ${(event.elapsedMs / 1000).toFixed(2)} s` : "Compilation cancelled";
+  }
+}
+
+async function compile() {
+  if (!canCompile.value || !props.runner) return;
+  diagnostics.value = [];
+  statusMessage.value = "Preparing virtual workspace";
+  const request = createCompileRequest({
+    compilerId: props.runner.id,
+    workspace: workspace.value.map(({ path, content }) => ({ path, content })),
+    entryPath: props.entryPath,
+    target: props.target,
+    profile: "release",
+  });
+  requestId.value = request.requestId;
+  stage.value = "queued";
+  try {
+    const artifact = await props.runner.compile(request, handleEvent);
+    if (artifact) emit("artifact", artifact);
+  } catch (error) {
+    stage.value = "failed";
+    statusMessage.value = error instanceof Error ? error.message : String(error);
+  }
+}
+
+function cancel() {
+  if (!requestId.value || !props.runner) return;
+  props.runner.cancel(requestId.value);
+  if (!isTerminalStage(stage.value)) {
+    stage.value = "cancelled";
+    statusMessage.value = "Cancellation requested";
+  }
+}
+
+watch(() => props.files, (files) => {
+  workspace.value = files.map((file) => ({ ...file }));
+}, { deep: true });
+
+onBeforeUnmount(() => {
+  if (requestId.value && !["idle", "succeeded", "failed", "cancelled", "terminated"].includes(stage.value)) {
+    props.runner?.cancel(requestId.value);
+  }
+});
+</script>
+
+<template>
+  <section class="vooya-workbench" :data-stage="stage" :data-editable="editable">
+    <header class="vooya-workbench-toolbar">
+      <div><span class="vooya-workbench-signal"></span><strong>{{ capabilityLabel }}</strong><small v-if="statusMessage">{{ statusMessage }}</small></div>
+      <div>
+        <button v-if="isRunning" type="button" @click="cancel">Cancel</button>
+        <button type="button" :disabled="!canCompile || isRunning" :title="canCompile ? 'Compile the current virtual workspace' : 'This case remains precompiled until the browser compiler gate passes'" @click="compile">{{ actionLabel }}</button>
+      </div>
+    </header>
+    <VooyaIde :title="title" :files="workspace" :active-path="entryPath" :readonly="!editable" :height="height" @update:file-content="updateFile" />
+    <footer class="vooya-workbench-output" aria-live="polite">
+      <div><span>DIAGNOSTICS</span><b>{{ diagnostics.length }}</b></div>
+      <p v-if="!diagnostics.length">{{ editable ? 'No diagnostics yet.' : 'Rust editing is disabled. This page mounts the repository-built artifact; the compiler control is intentionally unavailable.' }}</p>
+      <ol v-else><li v-for="(diagnostic, index) in diagnostics" :key="`${diagnostic.message}-${index}`" :data-severity="diagnostic.severity"><b>{{ diagnostic.severity }}</b><span>{{ diagnostic.location?.path }}{{ diagnostic.location ? `:${diagnostic.location.start.line}:${diagnostic.location.start.column}` : '' }}</span>{{ diagnostic.message }}</li></ol>
+    </footer>
+  </section>
+</template>

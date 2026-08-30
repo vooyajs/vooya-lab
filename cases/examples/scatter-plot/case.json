@@ -3,10 +3,36 @@
   "category": "examples",
   "slug": "scatter-plot",
   "title": "R-tree scatter explorer",
+  "summary": "Query nearest neighbors across a large point set with Rust's rstar spatial index while Vue owns the surrounding controls.",
+  "tags": ["rstar", "spatial index", "Canvas", "Vue"],
   "status": "live",
+  "portfolioClass": "foundation",
+  "question": "Can a real Rust spatial-index crate remain behind a bounded Vooya component while Vue owns the surrounding product controls?",
+  "spec": "./SPEC.md",
   "vooyaComponent": "./src/ScatterPlot.rs",
   "host": "./DemoPage.vue",
   "interactions": ["query nearest point", "compare R-tree and linear scan", "change point count", "zoom"],
   "reference": "https://github.com/vooyajs/vooya/blob/main/docs/guide/scatter-plot.md",
-  "evidence": ["Rust-file component compiled by the lab Vooya entry", "rstar crate builds an R-tree over the selected point count", "pointer queries update from both implementations"]
+  "evidence": ["Rust-file component compiled by the lab Vooya entry", "rstar crate builds an R-tree over the selected point count", "pointer queries update from both implementations"],
+  "execution": {
+    "mode": "precompiled",
+    "editable": false
+  },
+  "distribution": {
+    "mode": "demo-only",
+    "files": ["./src/ScatterPlot.rs", "./src/ScatterPlot.css", "./DemoPage.vue", "./ScatterBaseline.vue", "./index.ts"]
+  },
+  "proof": {
+    "hostOwns": ["gallery page", "point-count and zoom controls", "implementation comparison"],
+    "rustOwns": ["deterministic point set", "rstar R-tree", "nearest-neighbor queries", "Canvas result"],
+    "gpuRelationship": "not-applicable",
+    "boundary": {
+      "inputs": ["numeric point-count and zoom props"],
+      "outputs": ["component-owned Canvas presentation"],
+      "updatePattern": "Props cross on host updates; pointer queries remain inside the component."
+    },
+    "reusedCrates": ["rstar"],
+    "vooyaContracts": ["Rust-file build", "typed props", "Vue adapter", "mount and disposal"],
+    "alternatives": ["plain JavaScript linear scan", "custom wasm-bindgen wrapper", "optimized JavaScript spatial index"]
+  }
 }

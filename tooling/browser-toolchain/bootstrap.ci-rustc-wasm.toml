@@ -1,0 +1,28 @@
+profile = "compiler"
+change-id = 9999999
+
+[llvm]
+download-ci-llvm = true
+
+[rust]
+codegen-backends = ["llvm", "cranelift"]
+deny-warnings = false
+llvm-tools = false
+llvm-bitcode-linker = false
+debug = false
+debuginfo-level = 0
+
+[build]
+docs = false
+extended = false
+tools = []
+host = ["wasm32-wasip1"]
+target = ["wasm32-unknown-unknown"]
+
+[target.'wasm32-wasip1']
+wasi-root = "wasi-sdk-32.0-x86_64-linux/share/wasi-sysroot"
+linker = "wasi-sdk-32.0-x86_64-linux/bin/clang"
+codegen-backends = ["cranelift"]
+
+[target.'wasm32-unknown-unknown']
+codegen-backends = ["cranelift"]

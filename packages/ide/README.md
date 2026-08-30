@@ -22,8 +22,11 @@ const files: IdeFile[] = [
 </template>
 ```
 
-The current component emits `update:activePath` when navigation changes and
-`update:fileContent` with `(path, content)` after an edit.
+The low-level component emits `update:activePath` when navigation changes and
+`update:fileContent` with `(path, content)` after an edit. `VooyaWorkbench`
+composes the editor with a toolchain-neutral compiler runner, normalized state,
+diagnostics, cancellation, and artifact events. Precompiled cases pass
+`editable=false`, which leaves compilation visibly and truthfully disabled.
 
 ## Scope
 
@@ -32,6 +35,11 @@ and edit a virtual workspace and is already used by browser-side WASM bundler
 experiments. A future WASM workbench layer should add pluggable runners,
 normalized diagnostics, build output and preview lifecycle without hard-coding
 one language toolchain into the editor component.
+
+Browser Rust compilation is governed separately by
+[`docs/browser-compiler.md`](../../docs/browser-compiler.md). The IDE remains a
+toolchain-neutral surface; a composition layer supplies real runner,
+diagnostics, artifact, and preview contracts.
 
 For Vite-hosted examples, the workbench can enumerate a demo unit at build
 time instead of maintaining a second handwritten file list:

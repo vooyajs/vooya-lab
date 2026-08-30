@@ -1,0 +1,18 @@
+diff --git a/compiler/rustc_codegen_cranelift/riwl/src/link.rs b/compiler/rustc_codegen_cranelift/riwl/src/link.rs
+index 878f418bd14..756162c9032 100644
+--- a/compiler/rustc_codegen_cranelift/riwl/src/link.rs
++++ b/compiler/rustc_codegen_cranelift/riwl/src/link.rs
+@@ -580,6 +580,13 @@ pub fn link(opts: &LinkOptions) -> Result<Vec<u8>> {
+             if exported.contains(name) {
+                 continue;
+             }
++            if let Some(&value) = abs_values.get(name.as_str()) {
++                let global_index = 1 + synth_globals.len() as u32;
++                synth_globals.push((value, false));
++                export_list.push((name.clone(), 0x03, global_index));
++                exported.insert(name.clone());
++                continue;
++            }
+             let Some(&(dpos, dsi)) = global.get(name) else {
+                 bail!("--export {name}: symbol not defined");
+             };
