@@ -98,15 +98,25 @@ Every public case page follows one predictable reading order:
 
 1. breadcrumb, name, one-sentence outcome, and supported host/framework badges;
 2. a short explanation of what the case enables and why Vooya is useful there;
-3. a large interactive preview sandbox with case-local controls and reset;
-4. a source Workbench with Rust, host-framework, style, manifest, and evidence
-   files;
-5. copy/install actions and complete dependency information; and
+3. one fixed-height **Live Workbench** that keeps the interactive preview and
+   source in the same visual context;
+4. copy/install actions and complete dependency information;
+5. the explicit **Why this boundary?** explanation; and
 6. optional props/events, implementation notes, limitations, and related cases.
+
+At wide desktop sizes, the Live Workbench defaults to a side-by-side Preview +
+Source split. At widths where either pane would become cramped, it defaults to
+one pane with explicit Preview and Source tabs. A successful compile may reveal
+Preview on compact layouts, but it must not unexpectedly replace the user's
+split layout on desktop. The work surface has a stable outer height; the editor,
+source tree, preview, and case-specific dense views own their internal scroll.
 
 The directory remains visible on desktop and becomes a drawer or compact case
 picker on small screens. Preview controls belong to the sandbox; source and copy
-controls belong to the Workbench.
+controls belong to the Workbench. A precompiled case omits compile controls
+instead of displaying a permanently disabled action. It may link to the public
+Compiler alpha, but the link must state that the alpha compiles controlled
+probes/templates rather than the current arbitrary case workspace.
 
 ### Navigation scale contract
 
@@ -224,8 +234,7 @@ Rules:
 
 - `editable` defaults to `false`.
 - When `false`, source is selectable, navigable, and copyable, but cannot be
-  changed. Compile/run actions that would imply source compilation are absent or
-  disabled with an honest explanation.
+  changed. Compile/run actions that would imply source compilation are absent.
 - When `true`, the case must also declare a real supported execution mode. The
   UI must never simulate a successful Rust build.
 - `editable` controls product affordances; it is not a sandbox or security
@@ -543,15 +552,17 @@ Agents working in this repository must follow these rules:
 
 ## Near-term sequence
 
-1. Maintain the established case contract, route generation, and read-only Workbench.
+1. Maintain the established case contract, route generation, read-only default,
+   and shared Preview/Source Live Workbench.
 2. Continue the redesigned case browser and case detail around a persistent directory,
    outcome-first introduction, live sandbox, copy-ready source, and progressive
    disclosure of implementation.
 3. Keep current cases on filesystem-derived routes and precompiled artifacts.
 4. Extend the flagship portfolio beyond the first Log Atlas vertical slice with distinct architectural questions.
 5. Extract shared source-viewer, preview-host, and case-runtime packages.
-6. Publish and reproduce the controlled browser-compiler toolchain/profile
-   without broadening its fixed-ABI claim.
+6. Move the public Compiler alpha from third-party Gate 1 assets to immutable,
+   Vooya-owned assets with provenance and rollback, then publish and reproduce
+   the controlled Gate 2 profile without broadening its fixed-ABI claim.
 7. Enable `editable` for one constrained public case only after its own spec
    adopts the passed profile and adds cold-cache, peak-memory, schema, copy,
    compatibility, and accessibility evidence.
@@ -571,6 +582,30 @@ Agents working in this repository must follow these rules:
   boundary-crossing pattern without an unsupported performance claim.
 - Workbench is read-only by default and communicates that state clearly.
 - Current cases use repository-built, precompiled WASM.
-- No public control implies browser compilation before it exists.
+- Compiler controls appear only in the capability-labelled alpha or in a case
+  whose own execution spec enables a verified browser-compiler profile.
 - Shared code follows the dependency direction in this document.
 - Desktop and mobile flows both preserve effect-first progressive disclosure.
+
+## Current product and evidence gaps
+
+The Live Workbench redesign makes these remaining gaps explicit:
+
+- normal cases copy only the active file, not a dependency-complete installable
+  unit with Cargo and host mutations;
+- case workspaces do not yet expose dirty state, reset-to-source, compile
+  shortcuts, or persisted pane sizes/preferences;
+- the public Gate 1 cold path decodes roughly 159 MB and the controlled Gate 2
+  path roughly 241 MB; device eligibility, peak memory, progress-bytes, cache
+  eviction, and mobile policy are not yet productized;
+- public compiler assets still need Vooya-owned immutable hosting, provenance,
+  rollback, and release automation;
+- the controlled editable ABI is one fixed function/template, not arbitrary
+  Cargo, dependency resolution, procedural macros, or a general case compiler;
+- schema/declaration/source-map outputs and dependency-complete copy are absent;
+- compiler progress needs screen-reader/focus verification and failure-path
+  evidence beyond the existing state/diagnostic tests;
+- flagship cases still need explicit remount/disposal evidence and measured
+  boundary costs before any performance language; and
+- hundreds-of-cases scale still needs keyboard search, tags/capability filters,
+  virtualization, recent/saved cases, and page-local anchors.

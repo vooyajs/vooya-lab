@@ -64,9 +64,12 @@ parallel by default.
 
 ### Experience and source
 
-Specify the introduction, preview behavior, controls, reset semantics, source
-files, install/copy actions, props/events, error presentation, reduced-motion
-behavior, and small-screen behavior.
+Specify the introduction, Live Workbench behavior, preview controls and reset
+semantics, source files, install/copy actions, props/events, error presentation,
+reduced-motion behavior, and small-screen behavior. Preview and Source share one
+stable-height work surface: split at wide desktop sizes and explicit tabs when
+either pane would be cramped. Precompiled cases omit compile actions; a link to
+Compiler alpha must not imply that the current case workspace is editable.
 
 ### Execution and isolation
 

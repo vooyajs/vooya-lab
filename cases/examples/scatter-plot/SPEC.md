@@ -68,6 +68,9 @@ crate reuse and workload shape, not language superiority.
 
 ## Experience and source
 
+- Live Workbench: Preview and Source share one fixed-height surface; wide
+  desktops use a split view and compact layouts use explicit Preview/Source
+  tabs.
 - Preview: interactive point field with pointer nearest-neighbor queries in a
   stable-height stage when switching implementations.
 - Controls: implementation, point count, zoom, and reset.
@@ -75,7 +78,9 @@ crate reuse and workload shape, not language superiority.
 - Copy/install: the Workbench toolbar copies the currently active file; complete
   component copy is not yet honest because the case depends on application
   internals.
-- Source Workbench: read-only.
+- Source Workbench: read-only; compile controls are absent. The Compiler alpha
+  link opens a separate controlled probe and does not imply this `rstar` crate
+  graph is browser-editable.
 
 ## Execution and isolation
 
@@ -98,6 +103,7 @@ configuration, and a case-local detail composition that does not import
 - [x] Pointer queries update in the Rust and baseline implementations.
 - [x] Runtime props change point count and zoom.
 - [x] Source is readable in the composed Workbench.
+- [x] Preview and Source remain in one responsive Live Workbench context.
 - [x] The detail page exposes the standard **Why this boundary?** section.
 - [x] The case no longer imports private `apps/web` components or types.
 - [x] Filesystem metadata generates the public route and directory entry.

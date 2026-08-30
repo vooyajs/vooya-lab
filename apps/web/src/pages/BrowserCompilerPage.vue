@@ -3,8 +3,8 @@ import { computed, onBeforeUnmount, ref } from "vue";
 import { BrowserBindgenRunner, type BrowserBindgenResult } from "@vooya-lab/bindgen-browser";
 import type { ArtifactManifest, CompileRequest, CompilerEvent } from "@vooya-lab/compiler-protocol";
 import { BrowserRustcGateOneRunner, probeBrowserCompilerEnvironment, WEBLINGS_DEMO_ASSETS, WEBLINGS_GATE_1_CANDIDATE } from "@vooya-lab/compiler-browser";
-import { VooyaWorkbench, type IdeFile } from "@vooya-lab/ide";
-import { IsolatedVooyaPreviewHost, type PreviewStage } from "@vooya-lab/preview-host";
+import { CaseLiveWorkbench, VooyaWorkbench, type IdeFile } from "@vooya-lab/ide";
+import { IsolatedVooyaPreviewHost, type PreviewStage, type VooyaArtifactBundle } from "@vooya-lab/preview-host";
 import { BrowserGeneratedGlueRunner, BrowserWasmExportRunner } from "@vooya-lab/runtime-module";
 import { BrowserWasiCommandRunner, type WasiCommandResult } from "@vooya-lab/runtime-wasi";
 import vooyaGlue from "../../../../.vooya/wasm/vooya_app.js?raw";
@@ -45,6 +45,7 @@ const artifact = ref<ArtifactManifest>();
 const lastEvent = ref<CompilerEvent>();
 const lastElapsedMs = ref<number>();
 const previewElement = ref<HTMLElement>();
+const liveWorkbench = ref<{ revealPreview: () => void }>();
 const previewStage = ref<PreviewStage>("idle");
 const previewMessage = ref("No component realm has been created.");
 const executionStage = ref<"idle" | "running" | "succeeded" | "failed">("idle");
@@ -54,7 +55,17 @@ const bindingStage = ref<"idle" | "running" | "succeeded" | "failed">("idle");
 const bindingMessage = ref("No browser-side binding transformation has run.");
 const bindingResult = ref<BrowserBindgenResult>();
 let previewHost: IsolatedVooyaPreviewHost<Record<string, unknown>> | undefined;
+let previewContainer: HTMLElement | undefined;
 let executionGeneration = 0;
+const buildStatusLabel = computed(() => {
+  if (lastEvent.value?.type === "state") return `${lastEvent.value.stage.toUpperCase()} · ${lastEvent.value.message ?? "Browser worker active"}`;
+  if (bindingStage.value === "running") return "BINDING · wasm-bindgen is transforming the artifact";
+  if (executionStage.value === "running") return "MOUNTING · previous preview remains visible";
+  if (lastEvent.value?.type === "complete") return `${lastEvent.value.stage.toUpperCase()} · ${(lastEvent.value.elapsedMs / 1000).toFixed(2)} S`;
+  if (executionStage.value === "succeeded") return "READY · browser artifact executed";
+  if (executionStage.value === "failed") return "ERROR · previous preview preserved";
+  return "IDLE · press Compile & run Rust";
+});
 const wasiFiles: IdeFile[] = [{
   path: "gate-one/main.rs",
   language: "Rust",
@@ -135,6 +146,7 @@ onBeforeUnmount(() => {
   wasiRunner.dispose();
   bindgenRunner?.dispose();
   void previewHost?.dispose();
+  previewContainer?.remove();
 });
 
 function handleCompilerEvent(event: CompilerEvent) {
@@ -152,12 +164,7 @@ function handleCompilerEvent(event: CompilerEvent) {
     bindingResult.value = undefined;
     bindingStage.value = "idle";
     bindingMessage.value = "Waiting for a new raw artifact.";
-    if (previewHost) {
-      void previewHost.dispose();
-      previewHost = undefined;
-      previewStage.value = "idle";
-      previewMessage.value = "The previous artifact realm was destroyed before compiling.";
-    }
+    if (previewHost?.stage === "mounted") previewMessage.value = "Building the next artifact. The current successful preview remains mounted until an atomic replacement is ready.";
   }
   if (event.type === "complete") {
     lastElapsedMs.value = event.elapsedMs;
@@ -235,16 +242,20 @@ async function handleArtifact(manifest: ArtifactManifest) {
         : `Artifact executed locally in ${result.elapsedMs.toFixed(1)} ms.`
       : `Artifact exited with code ${result.exitCode}.`;
     try {
-      if (mountedBrowserArtifact) return;
+      if (mountedBrowserArtifact) {
+        liveWorkbench.value?.revealPreview();
+        return;
+      }
       await mountProof({
         status: result.exitCode === 0 ? "success" : "error",
         output: result.stdout || result.stderr || "The artifact completed without output.",
         asset_count: 1,
         duration_ms: Math.max(0, Math.round(result.elapsedMs)),
       });
+      liveWorkbench.value?.revealPreview();
     } catch (cause) {
-      previewStage.value = "failed";
-      previewMessage.value = cause instanceof Error ? cause.message : String(cause);
+      if (previewHost?.stage !== "mounted") previewStage.value = "failed";
+      if (previewHost?.stage !== "mounted") previewMessage.value = cause instanceof Error ? cause.message : String(cause);
     }
   } catch (cause) {
     if (generation !== executionGeneration) return;
@@ -286,28 +297,57 @@ async function selectTarget(target: CompileRequest["target"]) {
   if (previewHost) {
     await previewHost.dispose();
     previewHost = undefined;
+    previewContainer?.remove();
+    previewContainer = undefined;
     previewStage.value = "idle";
     previewMessage.value = "No component realm has been created.";
   }
   compilerTarget.value = target;
 }
 
-function createPreviewHost() {
+async function swapPreview(bundle: VooyaArtifactBundle<Record<string, unknown>>) {
   if (!previewElement.value) throw new Error("Preview surface is unavailable");
-  previewHost = new IsolatedVooyaPreviewHost(previewElement.value, {
+  const previousHost = previewHost;
+  const previousContainer = previewContainer;
+  const nextContainer = document.createElement("div");
+  nextContainer.className = "compiler-preview-realm";
+  nextContainer.hidden = true;
+  previewElement.value.append(nextContainer);
+
+  const candidate = new IsolatedVooyaPreviewHost<Record<string, unknown>>(nextContainer, {
     onEvent(event) {
+      if (previewContainer !== nextContainer) return;
       previewStage.value = event.stage;
       previewMessage.value = event.message;
     },
   });
-  return previewHost;
+  previewHost = candidate;
+  previewContainer = nextContainer;
+
+  try {
+    await candidate.mount(bundle);
+    nextContainer.hidden = false;
+    if (previousContainer) previousContainer.hidden = true;
+    await previousHost?.dispose();
+    previousContainer?.remove();
+  } catch (cause) {
+    await candidate.dispose();
+    nextContainer.remove();
+    previewHost = previousHost;
+    previewContainer = previousContainer;
+    if (previousHost?.stage === "mounted" && previousContainer) {
+      previousContainer.hidden = false;
+      previewStage.value = "mounted";
+      previewMessage.value = `New artifact failed; the previous successful preview is still active. ${cause instanceof Error ? cause.message : String(cause)}`;
+    }
+    throw cause;
+  }
 }
 
 async function mountProof(props: Record<string, unknown>) {
-  const host = previewHost?.stage === "disposed" || !previewHost ? createPreviewHost() : previewHost;
   const response = await fetch(vooyaWasmUrl);
   if (!response.ok) throw new Error(`Could not load the repository-built Vooya artifact: HTTP ${response.status}`);
-  await host.mount({
+  await swapPreview({
     javascript: vooyaGlue,
     wasm: new Uint8Array(await response.arrayBuffer()),
     contract: {
@@ -322,8 +362,7 @@ async function mountProof(props: Record<string, unknown>) {
 }
 
 async function mountBrowserBuiltArtifact(result: BrowserBindgenResult) {
-  const host = previewHost?.stage === "disposed" || !previewHost ? createPreviewHost() : previewHost;
-  await host.mount({
+  await swapPreview({
     javascript: result.javascript,
     wasm: result.wasm,
     contract: {
@@ -346,8 +385,10 @@ async function mountPrecompiledProof() {
       duration_ms: 0,
     });
   } catch (cause) {
-    previewStage.value = "failed";
-    previewMessage.value = cause instanceof Error ? cause.message : String(cause);
+    if (previewHost?.stage !== "mounted") {
+      previewStage.value = "failed";
+      previewMessage.value = cause instanceof Error ? cause.message : String(cause);
+    }
   }
 }
 
@@ -362,13 +403,16 @@ async function resetPreview() {
 
 async function disposePreview() {
   await previewHost?.dispose();
+  previewContainer?.remove();
+  previewHost = undefined;
+  previewContainer = undefined;
 }
 </script>
 
 <template>
   <article class="compiler-gate-page">
     <header>
-      <span>HIDDEN TOOLCHAIN EXPERIMENT · GATES 1–2</span>
+      <span>PUBLIC ALPHA · REAL LOCAL TOOLCHAIN · GATES 1–2</span>
       <h1>Rustc, <em>inside the browser.</em></h1>
       <p>This route compiles changed Rust source with a real WASM-hosted rustc in a dedicated Worker. It does not call a remote compiler. The WASI path proves executable Rust; the unknown-target path uses ordinary <code>std</code> when the exact compiler and sysroot pair is configured, and otherwise stays an explicit no-core probe.</p>
     </header>
@@ -391,20 +435,48 @@ async function disposePreview() {
       <button type="button" :aria-pressed="compilerTarget === 'wasm32-unknown-unknown'" @click="selectTarget('wasm32-unknown-unknown')">Unknown target · {{ gateTwoDomConfigured ? 'Gate 2 controlled' : bindgenProbeConfigured ? 'Gate 1.97' : dependencyProbeConfigured ? 'Gate 1.95' : standardLibraryProbeConfigured ? 'Gate 1.9' : 'Gate 1.75' }}</button>
     </section>
 
-    <VooyaWorkbench
-      :key="compilerTarget"
-      :title="compilerTarget === 'wasm32-wasip1' ? 'Browser rustc Gate 1' : gateTwoDomConfigured ? 'Constrained Vooya DOM template' : bindgenProbeConfigured ? 'Constrained binding scaffold' : dependencyProbeConfigured ? 'Vooya reactive profile' : standardLibraryProbeConfigured ? 'Unknown-target std probe' : 'Unknown-target no-core probe'"
-      :files="files"
-      :entry-path="entryPath"
-      editable
-      execution-mode="browser-compiler"
-      :target="compilerTarget"
-      action-label="Compile &amp; run Rust"
-      :runner="runner"
-      height="480px"
-      @artifact="handleArtifact"
-      @event="handleCompilerEvent"
-    />
+    <CaseLiveWorkbench
+      ref="liveWorkbench"
+      title="Browser Compiler α"
+      :capability="gateTwoDomConfigured && compilerTarget === 'wasm32-unknown-unknown' ? 'CONTROLLED VOOYA TEMPLATE' : 'LOCAL RUSTC · EXPERIMENTAL'"
+      detail="Edit, compile, execute, and inspect the result without leaving this work surface."
+    >
+      <template #preview-status><small class="compiler-inline-status">{{ buildStatusLabel }}</small></template>
+      <template #preview>
+        <section class="compiler-preview-gate">
+          <header>
+            <div><span>PREVIEW HOST · ISOLATED REALM</span><h2>{{ previewStage === 'mounted' ? 'Current successful result' : 'Your browser-built result appears here' }}</h2></div>
+            <code :data-stage="previewStage">{{ previewStage }}</code>
+          </header>
+          <p v-if="gateTwoDomConfigured">For the controlled unknown-target template, this frame mounts the JavaScript glue and WASM emitted by the current browser request. While a new build runs, the last successful realm remains visible and is replaced only after the new artifact is ready.</p>
+          <p v-else>The WASI path executes the actual artifact locally. The visible component presenter is repository-built and is labelled as such; this page does not claim that Gate 1 compiled an arbitrary Vooya UI.</p>
+          <div class="compiler-preview-actions">
+            <button v-if="!gateTwoDomConfigured" type="button" @click="mountPrecompiledProof()">Mount precompiled presenter</button>
+            <button type="button" :disabled="previewStage !== 'mounted'" @click="resetPreview">Reset realm</button>
+            <button type="button" :disabled="previewStage === 'idle' || previewStage === 'disposed'" @click="disposePreview">Dispose realm</button>
+            <small>{{ previewMessage }}</small>
+          </div>
+          <div ref="previewElement" class="compiler-preview-surface" :data-stage="previewStage"></div>
+          <footer><span>Sandbox: scripts only</span><span>Network: blocked by CSP</span><span>Swap: after success</span></footer>
+        </section>
+      </template>
+      <template #source>
+        <VooyaWorkbench
+          :key="compilerTarget"
+          :title="compilerTarget === 'wasm32-wasip1' ? 'Browser rustc Gate 1' : gateTwoDomConfigured ? 'Constrained Vooya DOM template' : bindgenProbeConfigured ? 'Constrained binding scaffold' : dependencyProbeConfigured ? 'Vooya reactive profile' : standardLibraryProbeConfigured ? 'Unknown-target std probe' : 'Unknown-target no-core probe'"
+          :files="files"
+          :entry-path="entryPath"
+          editable
+          execution-mode="browser-compiler"
+          :target="compilerTarget"
+          action-label="Compile &amp; run Rust"
+          :runner="runner"
+          height="100%"
+          @artifact="handleArtifact"
+          @event="handleCompilerEvent"
+        />
+      </template>
+    </CaseLiveWorkbench>
 
     <section class="compiler-artifact" :data-ready="Boolean(artifact)">
       <span>ARTIFACT MANIFEST</span>
@@ -434,21 +506,5 @@ Transformed WASM: {{ bindingResult.wasm.byteLength.toLocaleString() }} bytes</pr
       <footer v-if="bindingResult"><span>wasm-bindgen 0.2.115</span><span>{{ bindingResult.elapsedMs.toFixed(1) }} ms</span><span>fresh WASI Worker</span></footer>
     </section>
 
-    <section class="compiler-preview-gate">
-      <header>
-        <div><span>PREVIEW HOST · GATE 2 INFRASTRUCTURE</span><h2>Destroy the realm, not just the DOM.</h2></div>
-        <code :data-stage="previewStage">{{ previewStage }}</code>
-      </header>
-      <p v-if="gateTwoDomConfigured">For the unknown-target candidate, this frame imports and mounts the JavaScript glue and WASM emitted by the current browser request. A new compile destroys the previous realm before rustc starts.</p>
-      <p v-else>This frame is still a repository-built Vooya result presenter. Gate 1.97 runs the browser-emitted function through its generated glue, then passes only that result into this precompiled shell; it does not claim the browser compiler produced the visible component.</p>
-      <div class="compiler-preview-actions">
-        <button v-if="!gateTwoDomConfigured" type="button" @click="mountPrecompiledProof()">Mount precompiled proof</button>
-        <button type="button" :disabled="previewStage !== 'mounted'" @click="resetPreview">Reset realm</button>
-        <button type="button" :disabled="previewStage === 'idle' || previewStage === 'disposed'" @click="disposePreview">Dispose realm</button>
-        <small>{{ previewMessage }}</small>
-      </div>
-      <div ref="previewElement" class="compiler-preview-surface" :data-stage="previewStage"></div>
-      <footer><span>Sandbox: scripts only</span><span>Network: blocked by CSP</span><span>Reset: iframe replacement</span></footer>
-    </section>
   </article>
 </template>

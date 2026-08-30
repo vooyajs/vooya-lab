@@ -50,6 +50,16 @@ const isRunning = computed(() => stage.value !== "idle" && !isTerminalStage(stag
 const activeFile = computed(() => workspace.value.find((file) => file.path === activePath.value) ?? workspace.value[0]);
 const activeFileName = computed(() => activeFile.value?.path.split("/").pop() ?? "file");
 const copyLabel = computed(() => copyStatus.value === "copied" ? `Copied · ${activeFileName.value}` : copyStatus.value === "failed" ? "Copy failed" : "Copy active file");
+const compilerRequested = computed(() => props.executionMode !== "precompiled");
+const compilerSteps: Array<{ stage: CompilerStage; label: string }> = [
+  { stage: "queued", label: "Queue" },
+  { stage: "preparing", label: "Prepare" },
+  { stage: "compiling", label: "Compile" },
+  { stage: "linking", label: "Link" },
+  { stage: "emitting", label: "Emit" },
+  { stage: "succeeded", label: "Ready" },
+];
+const stageOrder = computed(() => compilerSteps.findIndex((step) => step.stage === stage.value));
 const capabilityLabel = computed(() => {
   if (!props.editable) return "PRECOMPILED · SOURCE LOCKED";
   if (props.executionMode !== "browser-compiler") return `${props.executionMode.toUpperCase()} · RUNNER REQUIRED`;
@@ -156,9 +166,16 @@ onBeforeUnmount(() => {
       <div class="vooya-workbench-actions">
         <button type="button" :disabled="!activeFile" :title="`Copy ${activeFileName}`" data-copy-action :data-copy-state="copyStatus" @click="copyActiveFile">{{ copyLabel }}</button>
         <button v-if="isRunning" type="button" @click="cancel">Cancel</button>
-        <button type="button" :disabled="!canCompile || isRunning" :title="canCompile ? 'Compile the current virtual workspace' : 'This case remains precompiled until the browser compiler gate passes'" @click="compile">{{ actionLabel }}</button>
+        <button v-if="compilerRequested" type="button" :disabled="!canCompile || isRunning" :title="canCompile ? 'Compile the current virtual workspace' : 'This compiler capability is not available in the current environment'" @click="compile">{{ actionLabel }}</button>
       </div>
     </header>
+    <div v-if="canCompile" class="vooya-compile-progress" role="status" :aria-label="statusMessage || `Compiler ${stage}`">
+      <span
+        v-for="(step, index) in compilerSteps"
+        :key="step.stage"
+        :data-state="stage === 'failed' && index === Math.max(stageOrder, 0) ? 'failed' : index < stageOrder || stage === 'succeeded' ? 'complete' : index === stageOrder ? 'active' : 'pending'"
+      ><i></i>{{ step.label }}</span>
+    </div>
     <VooyaIde :title="title" :files="workspace" :active-path="activePath" :readonly="!editable" :height="height" @update:active-path="activePath = $event" @update:file-content="updateFile" />
     <footer class="vooya-workbench-output" aria-live="polite">
       <div><span>DIAGNOSTICS</span><b>{{ diagnostics.length }}</b></div>

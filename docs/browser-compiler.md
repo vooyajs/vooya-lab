@@ -1,11 +1,14 @@
 # Browser Compiler Exploration Contract
 
 Status: Gates 1 through 1.97 and one controlled Gate 2 DOM template passed in
-local Chrome on a hidden experiment route. The Gate 2 profile compiles an
+local Chrome. The Gate 1 WASI probe is now exposed as a capability-labelled
+public alpha; the larger locally configured Gate 2 profile is not published by
+the deployment workflow. The Gate 2 profile compiles an
 editable, fixed-ABI Rust unit, links it into a trusted Vooya DOM scaffold, runs
 official wasm-bindgen in the browser, and mounts the exact emitted bytes. It is
 not arbitrary Cargo, editable procedural macros, or an untrusted-code service.
-No public Vooya browser compiler is claimed by the current Lab. See
+The public alpha claims only the gates that its configured assets actually
+support. See
 [`browser-compiler-gate-0.md`](./browser-compiler-gate-0.md) for the candidate
 inventory and [`browser-compiler-gate-1.md`](./browser-compiler-gate-1.md) for
 the first implementation evidence. The exact Vooya pipeline, Gate 1.5 evidence,
@@ -43,6 +46,17 @@ Current Lab Rust cases use repository-built, precompiled WASM and
 `editable: false`. Visitors may navigate and copy source, change documented
 runtime props, and replay the preview. No enabled control may imply that edited
 Rust is being compiled in the browser.
+
+`#/experiments/browser-compiler` is linked from the global navigation and from
+precompiled Live Workbenches as **Compiler alpha**. Its default WASI path edits,
+compiles, executes, and validates one real Rust command entirely in the browser.
+Unknown-target capability is labelled by the exact configured gate. It must not
+claim arbitrary Cargo or imply that a precompiled case's crate graph is editable.
+
+Compiler feedback and Preview share one Live Workbench. State transitions are
+visible beside the source. The last successful preview remains mounted while a
+new request prepares/compiles and is replaced only after the new artifact is
+ready; failed builds retain the prior result and show diagnostics.
 
 ## Protocol-first packages
 

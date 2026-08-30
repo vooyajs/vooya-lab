@@ -28,6 +28,19 @@ replace the running preview.
 - Motion: state change, traversal, compilation, and data lineage—not decorative
   perpetual motion. Respect `prefers-reduced-motion`.
 
+### Readability floor
+
+The dense instrument aesthetic does not authorize illegible interface text.
+Use these minimum tokens at 100% browser zoom:
+
+- body and explanatory copy: `13px`;
+- controls, buttons, tabs, and compact navigation: `11px`;
+- metadata, status, routes, and evidence labels: `10–11px`;
+- source code: `13px` with at least `1.6` line height.
+
+Text below `10px` is decorative only, cannot carry state or instructions, and
+must disappear before it becomes the sole representation of information.
+
 The current `V/` mark is a functional placeholder and a useful seed: `V`
 identifies Vooya while `/` suggests source paths, boundaries, and forward
 motion. Logo exploration may challenge its construction, but should preserve a

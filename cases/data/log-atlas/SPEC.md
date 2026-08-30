@@ -70,6 +70,9 @@ No speed claim is made. The live proof is ownership and integration shape.
 
 ## Experience and source
 
+- Live Workbench: Preview and Source share one fixed-height surface; wide
+  desktops use a split view and compact layouts use explicit Preview/Source
+  tabs.
 - Preview: spectral trace waterfall with service, route, duration, and status in
   a stable-height viewport; filters scroll inside the stage instead of shifting
   the rest of the case page.
@@ -80,6 +83,9 @@ No speed claim is made. The live proof is ownership and integration shape.
   a dependency-complete copy bundle still waits on a Cargo mutation path.
 - Reduced motion: the case uses no required animation.
 - Small screens: row metadata collapses before the trace bars; controls wrap.
+- Compile affordance: absent for this precompiled case. The Compiler alpha link
+  opens a separate controlled probe and does not imply that the `regex` crate
+  graph is browser-editable.
 
 ## Execution and isolation
 

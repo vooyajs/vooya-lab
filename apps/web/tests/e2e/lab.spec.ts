@@ -61,10 +61,11 @@ test("the shell keeps window fixed while content and active navigation scroll in
   })).toBe(true);
 });
 
-test("Gallery keeps tooling experiments out of its public navigation", async ({ page }) => {
+test("Gallery exposes the capability-labelled compiler alpha without promoting bundler experiments", async ({ page }) => {
   await page.goto("/#/");
   await expect(page.getByRole("heading", { name: "Rspack in the Browser" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Experiments", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Compiler/ })).toHaveAttribute("href", "#/experiments/browser-compiler");
   await page.goto("/#/bundlers/rspack");
   await expect(page.getByRole("heading", { name: "Rspack Browser" })).toBeVisible();
   await page.getByRole("link", { name: "Cases", exact: true }).click();
@@ -85,7 +86,7 @@ test("Gallery keeps tooling experiments out of its public navigation", async ({ 
 
 test("isolated preview host mounts, replaces, and disposes a real Vooya artifact realm", async ({ page }) => {
   await page.goto("/#/experiments/browser-compiler");
-  await page.getByRole("button", { name: "Mount precompiled proof" }).click();
+  await page.getByRole("button", { name: "Mount precompiled presenter" }).click();
   await expect(page.locator(".compiler-preview-gate > header code")).toHaveText("mounted");
   const firstFrame = page.locator('iframe[title="Vooya artifact preview"]');
   await expect(firstFrame).toHaveCount(1);
@@ -117,7 +118,8 @@ test("generated scatter route compares implementations and exposes a gated workb
   await expect(page.locator(".baseline-scatter .scatter-query")).toContainText("nearest");
   await page.getByRole("button", { name: "RESET" }).click();
   await expect(page.getByText("Rust R-tree", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Compile & preview" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Compile & preview" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Try Browser Compiler/ })).toBeVisible();
   await expect(page.getByText("PRECOMPILED · SOURCE LOCKED")).toBeVisible();
   const explorer = page.getByRole("complementary", { name: "Files" });
   await expect(explorer).toBeVisible();
@@ -134,8 +136,10 @@ test("generated scatter route compares implementations and exposes a gated workb
     scrollHeight: element.scrollHeight,
   }));
   expect(editorMetrics.scrollHeight).toBeGreaterThan(editorMetrics.clientHeight);
-  await editorScroller.hover({ position: { x: 300, y: 200 } });
-  await page.mouse.wheel(0, 900);
+  await editorScroller.evaluate((element) => {
+    element.scrollTop = 900;
+    element.dispatchEvent(new Event("scroll"));
+  });
   await expect.poll(() => editorScroller.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
   const copyButton = page.locator(".vooya-workbench-toolbar [data-copy-action]");
   await expect(copyButton).toBeVisible();
@@ -156,6 +160,22 @@ test("generated scatter route compares implementations and exposes a gated workb
   });
   expect(tabMetrics.scrollWidth).toBe(tabMetrics.clientWidth);
   expect(tabMetrics.widthDelta).toBeLessThanOrEqual(1);
+});
+
+test("compact case workbench keeps preview and source one explicit tab apart", async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await page.goto("/#/cases/examples/scatter-plot");
+  const previewPane = page.getByRole("region", { name: "Preview pane" });
+  const sourcePane = page.getByRole("region", { name: "Source pane" });
+  await expect(previewPane).toBeVisible();
+  await expect(sourcePane).toBeHidden();
+  await expect(page.getByRole("button", { name: "SPLIT", exact: true })).toBeHidden();
+  await page.getByRole("button", { name: "SOURCE", exact: true }).click();
+  await expect(sourcePane).toBeVisible();
+  await expect(previewPane).toBeHidden();
+  await expect(sourcePane.getByRole("button", { name: "Compile & preview" })).toHaveCount(0);
+  await page.getByRole("button", { name: "PREVIEW", exact: true }).click();
+  await expect(previewPane).toBeVisible();
 });
 
 test("Log Atlas keeps trace querying in the Vooya Rust component", async ({ page }) => {

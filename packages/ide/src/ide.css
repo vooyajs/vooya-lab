@@ -29,8 +29,8 @@
 }
 
 .vooya-ide-titlebar > div { display: flex; align-items: center; gap: 8px; }
-.vooya-ide-titlebar strong { color: var(--ide-text); font-size: 11px; }
-.vooya-ide-titlebar > span { color: var(--ide-muted); font: 9px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; }
+.vooya-ide-titlebar strong { color: var(--ide-text); font-size: 12px; }
+.vooya-ide-titlebar > span { color: var(--ide-muted); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; }
 
 .vooya-ide-mark {
   display: grid;
@@ -57,7 +57,7 @@
   justify-content: space-between;
   margin: 2px 9px 9px;
   color: var(--ide-muted);
-  font: 700 9px ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 700 10px ui-monospace, SFMono-Regular, Menlo, monospace;
   letter-spacing: .1em;
 }
 
@@ -78,7 +78,7 @@
   background: transparent;
   text-align: left;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .vooya-ide-tree-row:hover { color: var(--ide-text); background: #1f252d; }
@@ -112,7 +112,7 @@
   color: var(--ide-muted);
   background: transparent;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .vooya-ide-tabs > [role="tab"]:last-child { border-right: 0; }
@@ -152,7 +152,7 @@
   border-top: 1px solid var(--ide-border);
   color: var(--ide-muted);
   background: var(--ide-panel);
-  font: 600 9px ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 600 10px ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .vooya-ide-status span:first-child { color: var(--ide-accent); }
@@ -163,18 +163,18 @@
 }
 
 .vooya-workbench { --workbench-accent: #c8ff3d; border: 1px solid #30363d; background: #0d1117; }
-.vooya-workbench-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 46px; padding: 7px 10px; border-bottom: 1px solid #30363d; color: #8b949e; background: #12171e; font: 8px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.vooya-workbench-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; padding: 7px 10px; border-bottom: 1px solid #30363d; color: #8b949e; background: #12171e; font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; }
 .vooya-workbench-toolbar > div { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .vooya-workbench-toolbar .vooya-workbench-actions { flex: none; flex-wrap: wrap; justify-content: flex-end; }
 .vooya-workbench-toolbar strong { color: #c9d1d9; font-weight: 500; }
 .vooya-workbench-toolbar small { min-width: 0; overflow: hidden; color: #8b949e; text-overflow: ellipsis; white-space: nowrap; }
 .vooya-workbench-signal { width: 7px; height: 7px; border-radius: 50%; background: #6e7681; }
 .vooya-workbench[data-editable="true"] .vooya-workbench-signal { background: var(--workbench-accent); box-shadow: 0 0 10px rgba(200,255,61,.5); }
-.vooya-workbench-toolbar button { min-height: 28px; padding: 0 9px; border: 1px solid #484f58; color: #c9d1d9; background: #161b22; cursor: pointer; font: 8px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.vooya-workbench-toolbar button { min-height: 32px; padding: 0 10px; border: 1px solid #484f58; color: #c9d1d9; background: #161b22; cursor: pointer; font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; }
 .vooya-workbench-toolbar button:last-child { color: #071009; border-color: var(--workbench-accent); background: var(--workbench-accent); }
 .vooya-workbench-toolbar button:disabled { color: #6e7681; border-color: #30363d; background: #161b22; cursor: not-allowed; }
 .vooya-workbench > .vooya-ide { border: 0; border-radius: 0; }
-.vooya-workbench-output { min-height: 70px; padding: 11px 12px; border-top: 1px solid #30363d; color: #8b949e; background: #0a0e13; font: 8px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.vooya-workbench-output { min-height: 72px; padding: 11px 12px; border-top: 1px solid #30363d; color: #8b949e; background: #0a0e13; font: 10px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .vooya-workbench-output > div { display: flex; gap: 7px; color: #6e7681; }
 .vooya-workbench-output > div b { color: #c9d1d9; font-weight: 400; }
 .vooya-workbench-output p { margin: 8px 0 0; }
@@ -182,6 +182,16 @@
 .vooya-workbench-output li { display: grid; grid-template-columns: 55px minmax(130px, auto) minmax(0, 1fr); gap: 8px; }
 .vooya-workbench-output li b { color: #ff7b72; font-weight: 500; text-transform: uppercase; }
 .vooya-workbench-output li[data-severity="warning"] b { color: #d29922; }
+
+.vooya-compile-progress { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 1px; padding: 8px 10px; border-bottom: 1px solid #30363d; color: #6e7681; background: #0a0e13; font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.vooya-compile-progress span { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.vooya-compile-progress i { flex: none; width: 7px; height: 7px; border: 1px solid #484f58; border-radius: 50%; background: #161b22; }
+.vooya-compile-progress span[data-state="active"] { color: #dce5de; }
+.vooya-compile-progress span[data-state="active"] i { border-color: var(--workbench-accent); background: var(--workbench-accent); box-shadow: 0 0 10px rgba(200,255,61,.55); }
+.vooya-compile-progress span[data-state="complete"] { color: #9bbf93; }
+.vooya-compile-progress span[data-state="complete"] i { border-color: #7ee787; background: #7ee787; }
+.vooya-compile-progress span[data-state="failed"] { color: #ff7b72; }
+.vooya-compile-progress span[data-state="failed"] i { border-color: #ff7b72; background: #ff7b72; }
 
 @media (max-width: 640px) {
   .vooya-workbench-toolbar { align-items: flex-start; flex-direction: column; }

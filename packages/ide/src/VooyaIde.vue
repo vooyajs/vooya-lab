@@ -53,7 +53,7 @@ function languageExtension(language: string) {
 
 const vooyaTheme = EditorView.theme({
   "&": { height: "100%", color: "#c9d1d9", backgroundColor: "#0d1117" },
-  ".cm-content": { padding: "16px 0", caretColor: "#7ee787", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: "12px", lineHeight: "1.62" },
+  ".cm-content": { padding: "16px 0", caretColor: "#7ee787", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: "13px", lineHeight: "1.62" },
   ".cm-line": { padding: "0 18px" },
   ".cm-gutters": { color: "#484f58", backgroundColor: "#0d1117", border: "0" },
   ".cm-activeLine, .cm-activeLineGutter": { backgroundColor: "#161b22" },

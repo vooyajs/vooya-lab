@@ -1,5 +1,17 @@
 # @vooya-lab/ide
 
+Shared source and live-case work surfaces for Vooya Lab.
+
+- `VooyaIde` owns the file tree, tabs, CodeMirror surface, and internal scroll.
+- `VooyaWorkbench` adds copy, compiler capability, progress, cancellation, and
+  diagnostics without pretending a precompiled case can compile.
+- `CaseLiveWorkbench` composes Preview and Source into one fixed-height context:
+  split on wide screens and explicit tabs when either pane would be cramped.
+
+The Live Workbench accepts slots for case-owned preview/source content. It does
+not own a case manifest, route registry, compiler implementation, or runtime
+sandbox.
+
 An incubating source workbench for VooyaLab demos and browser experiments.
 
 The package deliberately owns the IDE experience—file navigation, tabs,
@@ -27,15 +39,16 @@ The low-level component emits `update:activePath` when navigation changes and
 composes the editor with a toolchain-neutral compiler runner, normalized state,
 diagnostics, cancellation, artifact events, and a toolbar action that copies the
 currently active file. Precompiled cases pass
-`editable=false`, which leaves compilation visibly and truthfully disabled.
+`editable=false`, which omits compilation entirely and keeps the source/copy
+experience truthful. A surrounding Live Workbench may link to Compiler alpha,
+but that link does not change the current case's execution capability.
 
 ## Scope
 
-Today this is an embedded IDE shell, not a browser Rust compiler. It can display
-and edit a virtual workspace and is already used by browser-side WASM bundler
-experiments. A future WASM workbench layer should add pluggable runners,
-normalized diagnostics, build output and preview lifecycle without hard-coding
-one language toolchain into the editor component.
+This remains an embedded IDE/work-surface package, not a browser Rust compiler.
+It can display and edit a virtual workspace and compose a supplied preview with
+a pluggable runner, normalized diagnostics, and build output without hard-coding
+one language toolchain or preview lifecycle into the editor component.
 
 Browser Rust compilation is governed separately by
 [`docs/browser-compiler.md`](../../docs/browser-compiler.md). The IDE remains a

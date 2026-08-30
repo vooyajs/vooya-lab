@@ -88,7 +88,7 @@ watch(() => route.path, () => {
       <RouterLink class="lab-mark" to="/" aria-label="Vooya Lab home">V/</RouterLink>
       <RouterLink class="lab-brand" to="/">VOOYA LAB <span>α.01</span></RouterLink>
       <div class="lab-global">
-        <nav aria-label="Global navigation"><RouterLink to="/">Cases</RouterLink><a href="https://vooyajs.com" target="_blank" rel="noreferrer">Docs</a><a href="https://github.com/vooyajs/vooya/discussions/104" target="_blank" rel="noreferrer">Roadmap</a></nav>
+        <nav aria-label="Global navigation"><RouterLink to="/">Cases</RouterLink><RouterLink class="compiler-alpha-link" to="/experiments/browser-compiler">Compiler <sup>α</sup></RouterLink><a href="https://vooyajs.com" target="_blank" rel="noreferrer">Docs</a><a href="https://github.com/vooyajs/vooya/discussions/104" target="_blank" rel="noreferrer">Roadmap</a></nav>
         <div class="lab-global-actions">
           <button class="lab-mobile-trigger" type="button" :aria-expanded="mobileOpen" @click="mobileOpen = !mobileOpen">Browse · {{ implementedItems.length + plannedItems.length }}</button>
           <a class="lab-github" href="https://github.com/vooyajs/vooya-lab" target="_blank" rel="noreferrer">GitHub <b>↗</b></a>
