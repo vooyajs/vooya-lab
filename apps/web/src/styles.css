@@ -764,6 +764,26 @@ body { background: var(--lab-page); }
 .case-live-source .vooya-workbench > .vooya-ide { flex: 1; min-height: 0; height: auto; border: 0; }
 .case-live-source .vooya-workbench-output { flex: none; }
 
+/* A light route shell makes code-split case navigation observable. Heavy case
+   modules and WASM remain on demand; intent prefetch only warms the case the
+   visitor is already approaching. */
+.case-route-loading-workbench { container-type: inline-size; }
+.case-route-preview-stage { position: relative; min-height: 0; background: radial-gradient(circle at 70% 20%, rgba(118,103,255,.14), transparent 42%), #050b08; }
+.case-route-preview-stage .compiler-preview-loading { background: rgba(3,8,7,.42); }
+.case-route-source-skeleton { display: grid; grid-template-columns: minmax(130px, .35fr) minmax(0, 1fr); background: #090f16; }
+.case-route-source-skeleton > div { display: grid; align-content: start; gap: 17px; padding: 24px 17px; border-right: 1px solid var(--lab-line); }
+.case-route-source-skeleton > div:last-child { border-right: 0; }
+.case-route-source-skeleton span { display: block; width: min(100%, 180px); height: 8px; background: linear-gradient(90deg, rgba(129,145,157,.18), rgba(91,245,218,.12), rgba(129,145,157,.18)); background-size: 220% 100%; animation: case-route-skeleton 1.6s ease-in-out infinite; }
+.case-route-source-skeleton span:nth-child(2n) { width: 72%; animation-delay: .12s; }
+.case-route-source-skeleton span:nth-child(3n) { width: 46%; animation-delay: .24s; }
+
+@container (max-width: 1120px) {
+  .case-route-loading-workbench .case-live-grid { grid-template-columns: 1fr; height: 660px; }
+  .case-route-loading-workbench .case-live-source { display: none; }
+}
+
+@keyframes case-route-skeleton { 0%, 100% { background-position: 100% 0; opacity: .55; } 50% { background-position: 0 0; opacity: 1; } }
+
 .case-live-workbench[data-compact="true"] .case-live-toolbar { align-items: flex-start; flex-direction: column; }
 .case-live-workbench[data-compact="true"] .case-live-actions { width: 100%; justify-content: space-between; }
 .case-live-workbench[data-compact="true"] .case-live-view-switch button:first-child { display: none; }
@@ -922,7 +942,7 @@ body { background: var(--lab-page); }
 @keyframes compiler-preview-pulse { 0%, 100% { background: rgba(91,245,218,.14); } 50% { background: var(--lab-cyan); box-shadow: 0 0 10px rgba(91,245,218,.55); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .compiler-preview-loading-orbit i, .compiler-preview-loading-track i { animation: none; }
+  .compiler-preview-loading-orbit i, .compiler-preview-loading-track i, .case-route-source-skeleton span { animation: none; }
   .compiler-preview-loading-track i:nth-child(-n+4) { background: var(--lab-cyan); }
 }
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
 import { RouterLink, RouterView, useRoute } from "vue-router";
-import { caseByRoute, registeredCases } from "./cases/registry";
+import { caseByRoute, prefetchCase, registeredCases } from "./cases/registry";
 
 type LibrarySection = "all" | "data" | "graphics" | "tools";
 type DirectoryItem = {
@@ -116,7 +116,7 @@ watch(() => route.path, () => {
       <label class="directory-search"><span>⌕</span><input v-model="query" type="search" placeholder="Search cases…" aria-label="Search cases" /></label>
       <template v-for="group in visibleGroups" :key="group.name">
         <p>{{ group.name }}</p>
-        <component :is="item.route ? RouterLink : 'span'" v-for="item in group.entries" :key="item.title" :to="item.route" :class="{ planned: !item.route }"><span>{{ item.title }}</span><code>{{ item.badge }}</code></component>
+        <component :is="item.route ? RouterLink : 'span'" v-for="item in group.entries" :key="item.title" :to="item.route" :class="{ planned: !item.route }" @pointerenter="prefetchCase(item.route)" @focus="prefetchCase(item.route)" @touchstart.passive="prefetchCase(item.route)"><span>{{ item.title }}</span><code>{{ item.badge }}</code></component>
       </template>
     </div>
 
@@ -148,6 +148,9 @@ watch(() => route.path, () => {
               :class="{ planned: !item.route }"
               :to="item.route"
               :aria-current="item.route === route.path ? 'page' : undefined"
+              @pointerenter="prefetchCase(item.route)"
+              @focus="prefetchCase(item.route)"
+              @touchstart.passive="prefetchCase(item.route)"
             ><span>{{ item.title }}</span><code>{{ item.badge }}</code></component>
           </section>
           <p v-if="!visibleGroups.length" class="directory-empty">No matching cases.</p>
@@ -156,7 +159,7 @@ watch(() => route.path, () => {
 
       <main ref="mainElement" class="lab-main">
         <div v-if="activeCase" class="mobile-case-context"><span>Case library / <b>{{ activeCase.manifest.title }}</b></span><span>{{ String(activeCaseIndex + 1).padStart(2, '0') }} / {{ implementedItems.length }}</span></div>
-        <RouterView />
+        <RouterView v-slot="{ Component, route: viewRoute }"><component :is="Component" :key="viewRoute.path" /></RouterView>
       </main>
     </div>
   </div>

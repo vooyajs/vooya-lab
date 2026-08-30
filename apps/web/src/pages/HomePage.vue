@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from "vue-router";
-import { registeredCases } from "../cases/registry";
+import { prefetchCase, registeredCases } from "../cases/registry";
 
 const publicCases = registeredCases.filter((entry) => entry.manifest.portfolioClass !== "experiment");
 const portfolio = [
@@ -26,7 +26,7 @@ const portfolio = [
     <section class="catalog-section" aria-labelledby="live-heading">
       <header><span id="live-heading">01 — Run the proof</span><span>PRECOMPILED · INTERACTIVE</span></header>
       <div class="live-case-grid">
-        <RouterLink v-for="entry in publicCases" :key="entry.route" :to="entry.route" class="live-case-card">
+        <RouterLink v-for="entry in publicCases" :key="entry.route" :to="entry.route" class="live-case-card" @pointerenter="prefetchCase(entry.route)" @focus="prefetchCase(entry.route)" @touchstart.passive="prefetchCase(entry.route)">
           <div class="live-card-field" aria-hidden="true"><i v-for="dot in 36" :key="dot" :style="{ left: `${8 + (dot * 17) % 83}%`, top: `${5 + (dot * 29) % 86}%` }"></i><span>RUST / WASM · LIVE</span></div>
           <div class="live-card-copy"><span>{{ entry.manifest.portfolioClass }}</span><h2>{{ entry.manifest.title }}</h2><p>{{ entry.manifest.summary }}</p><div><code v-for="tag in entry.manifest.tags" :key="tag">{{ tag }}</code></div></div>
         </RouterLink>
@@ -40,7 +40,7 @@ const portfolio = [
           <div><span>{{ item.index }}</span><code>{{ item.kind }}</code></div>
           <h2>{{ item.title }}</h2>
           <p>{{ item.summary }}</p>
-          <RouterLink v-if="item.route" :to="item.route">OPEN LIVE CASE →</RouterLink>
+          <RouterLink v-if="item.route" :to="item.route" @pointerenter="prefetchCase(item.route)" @focus="prefetchCase(item.route)" @touchstart.passive="prefetchCase(item.route)">OPEN LIVE CASE →</RouterLink>
           <small v-else>{{ item.status }}</small>
         </article>
       </div>

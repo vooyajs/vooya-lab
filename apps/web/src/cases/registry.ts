@@ -1,13 +1,14 @@
 import { caseRoute, type LabCaseManifest } from "@vooya-lab/case-schema";
 import type { Component } from "vue";
 
-type PageModule = { default: Component };
+export type CasePageModule = { default: Component };
+export type CasePageLoader = () => Promise<CasePageModule>;
 
 export interface RegisteredCase {
   manifest: LabCaseManifest;
   route: string;
   sourcePath: string;
-  loadPage?: () => Promise<PageModule>;
+  loadPage?: CasePageLoader;
 }
 
 const manifests = import.meta.glob<LabCaseManifest>("/cases/*/*/case.json", {
@@ -15,22 +16,29 @@ const manifests = import.meta.glob<LabCaseManifest>("/cases/*/*/case.json", {
   import: "default",
 });
 
-const pages = import.meta.glob<PageModule>("/cases/*/*/DemoPage.vue");
+const pages = import.meta.glob<CasePageModule>("/cases/*/*/DemoPage.vue");
 
 export const registeredCases = Object.entries(manifests)
   .map(([sourcePath, manifest]): RegisteredCase => {
     const caseDirectory = sourcePath.slice(0, -"/case.json".length);
+    const pageLoader = pages[`${caseDirectory}/DemoPage.vue`];
+    let pagePromise: Promise<CasePageModule> | undefined;
     return {
       manifest,
       route: caseRoute(manifest),
       sourcePath,
-      loadPage: pages[`${caseDirectory}/DemoPage.vue`],
+      loadPage: pageLoader
+        ? () => (pagePromise ??= pageLoader().catch((error) => {
+            pagePromise = undefined;
+            throw error;
+          }))
+        : undefined,
     };
   })
   .sort((left, right) => left.manifest.title.localeCompare(right.manifest.title));
 
 export const runnableCases = registeredCases.filter(
-  (entry): entry is RegisteredCase & { loadPage: () => Promise<PageModule> } => Boolean(entry.loadPage),
+  (entry): entry is RegisteredCase & { loadPage: CasePageLoader } => Boolean(entry.loadPage),
 );
 
 export const caseGroups = Object.entries(
@@ -41,3 +49,8 @@ export const caseGroups = Object.entries(
 ).map(([category, entries]) => ({ category, entries }));
 
 export const caseByRoute = new Map(registeredCases.map((entry) => [entry.route, entry]));
+
+export function prefetchCase(route?: string) {
+  const loadPage = route ? caseByRoute.get(route)?.loadPage : undefined;
+  if (loadPage) void loadPage().catch(() => undefined);
+}

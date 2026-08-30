@@ -118,6 +118,23 @@ instead of displaying a permanently disabled action. It may link to the public
 Compiler alpha, but the link must state that the alpha compiles controlled
 probes/templates rather than the current arbitrary case workspace.
 
+### Case loading contract
+
+Case detail modules are code-split and remain lazy by default. Route navigation
+must still feel immediate: the application-owned route shell renders the case
+identity and a fixed-height, accessible Preview loading state before it imports
+the independently owned case module. Once the module resolves, the real case
+atomically replaces that shell and its precompiled WASM may initialize inside
+the same stable work surface.
+
+Directory and home links prefetch only on user intent (`pointerenter`, keyboard
+focus, or touch start). Do not add every case to the document's initial
+`modulepreload` set: that would make a future library of hundreds of cases eager
+and move the delay to first paint. Shared shell resources may be preloaded when
+measurement proves a benefit; case JavaScript, WASM, artwork, datasets, and
+toolchains stay on demand unless a case spec records a different reason. A
+failed dynamic import must leave navigation usable and expose a retry action.
+
 ### Navigation scale contract
 
 The public shell must be designed for hundreds of cases, not only the first

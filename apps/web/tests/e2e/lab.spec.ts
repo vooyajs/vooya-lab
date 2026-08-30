@@ -11,6 +11,27 @@ test("home page presents the generated case library and portfolio", async ({ pag
   await expect(page.getByText("Browser compiler: controlled Gate 2")).toBeVisible();
 });
 
+test("a cold case route renders a stable preview loader before its module arrives", async ({ page }) => {
+  let releaseModule!: () => void;
+  const moduleGate = new Promise<void>((resolve) => { releaseModule = resolve; });
+  await page.route("**/cases/state/workflow-replay/DemoPage.vue*", async (route) => {
+    await moduleGate;
+    await route.continue();
+  });
+
+  await page.goto("/#/cases/state/workflow-replay");
+  const loadingPreview = page.getByRole("status", { name: "Case preview loading" });
+  await expect(loadingPreview).toBeVisible();
+  await expect(page.locator(".case-route-pending")).toHaveAttribute("aria-busy", "true");
+  await expect(loadingPreview).toContainText("Preparing the interactive preview");
+  const workbenchHeight = await page.locator(".case-route-loading-workbench").evaluate((element) => element.getBoundingClientRect().height);
+  expect(workbenchHeight).toBeGreaterThan(600);
+
+  releaseModule();
+  await expect(loadingPreview).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Interactive approval workflow replay" })).toBeVisible();
+});
+
 test("case directory filters, collapses, and expands without replacing the page", async ({ page }) => {
   await page.goto("/#/");
   const directory = page.locator(".case-directory");

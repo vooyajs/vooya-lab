@@ -3,11 +3,13 @@ import HomePage from "./pages/HomePage.vue";
 import BundlersPage from "./pages/BundlersPage.vue";
 import RspackPage from "./pages/RspackPage.vue";
 import RolldownPage from "./pages/RolldownPage.vue";
+import CaseRoutePage from "./pages/CaseRoutePage.vue";
 import { runnableCases } from "./cases/registry";
 
 const generatedCaseRoutes: RouteRecordRaw[] = runnableCases.map((entry) => ({
   path: entry.route,
-  component: () => entry.loadPage().then((module) => module.default),
+  component: CaseRoutePage,
+  props: { manifest: entry.manifest, loadPage: entry.loadPage },
   meta: { caseRoute: true },
 }));
 
