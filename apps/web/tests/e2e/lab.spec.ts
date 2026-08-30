@@ -245,8 +245,14 @@ test("Bevy World Inspector runs a real bounded ECS schedule behind the Vue host"
   await expect(preview.getByRole("button", { name: /Agent 1,/ })).toBeVisible();
 
   const tickMetric = preview.locator(".bevy-metrics strong").nth(0);
+  const hostFpsMetric = preview.locator(".bevy-metrics strong").nth(1);
+  const ecsRateMetric = preview.locator(".bevy-metrics strong").nth(2);
+  const contactsMetric = preview.locator(".bevy-metrics strong").nth(4);
   const initialTick = Number(await tickMetric.innerText());
   await expect.poll(async () => Number(await tickMetric.innerText())).toBeGreaterThan(initialTick);
+  await expect.poll(async () => Number.parseInt(await hostFpsMetric.innerText(), 10)).toBeGreaterThan(0);
+  await expect(ecsRateMetric).toHaveText("25HZ");
+  await expect.poll(async () => Number((await contactsMetric.innerText()).split("/")[1])).toBeGreaterThan(0);
 
   await preview.getByRole("button", { name: "Ⅱ PAUSE" }).click();
   await expect(preview.getByText("SCHEDULE PAUSED")).toBeVisible();

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import type { LabCaseManifest } from "@vooya-lab/case-schema";
 import { CaseLiveWorkbench, VooyaWorkbench } from "@vooya-lab/ide";
 import { useVooyaStore } from "@vooya/vue";
@@ -15,6 +15,8 @@ type AgentProjection = {
   energy: number;
   faction: "ACID" | "CYAN" | "VIOLET";
   pulse: number;
+  radius: number;
+  impact: number;
   selected: boolean;
 };
 
@@ -27,13 +29,18 @@ type BevyWorldSnapshot = {
   selected_label: string;
   selected_energy: number;
   average_energy: number;
+  contacts_last_step: number;
+  contacts_total: number;
   checksum: number;
   agents: AgentProjection[];
 };
 
 const manifest = manifestData as LabCaseManifest;
 const rustEntryPath = "cases/simulation/bevy-world-inspector/src/BevyWorld.rs";
-const systems = ["MOVEMENT", "BOUNDARY", "ENERGY", "PULSE", "CLOCK"];
+const fixedStepMs = 40;
+const fixedStepHz = Math.round(1000 / fixedStepMs);
+const systems = ["IMPACT DECAY", "MOVEMENT", "BOUNDARY", "PAIR CONTACTS", "ENERGY", "PULSE", "CLOCK"];
+const renderFps = ref(0);
 const { snapshot: state, dispatch } = useVooyaStore(createBevyWorldStore(), {
   disposeOnUnmount: true,
 });
@@ -42,11 +49,13 @@ const initialSnapshot: BevyWorldSnapshot = {
   tick: 0,
   running: false,
   entity_count: 0,
-  system_count: 5,
+  system_count: 7,
   selected_id: 0,
   selected_label: "INITIALIZING WORLD",
   selected_energy: 0,
   average_energy: 0,
+  contacts_last_step: 0,
+  contacts_total: 0,
   checksum: 0,
   agents: [],
 };
@@ -56,6 +65,9 @@ const world = computed(() => (state.value as BevyWorldSnapshot | undefined) ?? i
 const ready = computed(() => state.value !== undefined);
 const selectedAgent = computed(() => world.value.agents.find((agent) => agent.id === world.value.selected_id));
 let clock: ReturnType<typeof setInterval> | undefined;
+let animationFrame: number | undefined;
+let fpsSampleStarted = 0;
+let fpsFrames = 0;
 
 function runAction(action: string, ...args: unknown[]) {
   if (ready.value) dispatch(action, ...args);
@@ -66,17 +78,33 @@ function agentStyle(agent: AgentProjection) {
     left: `${(agent.x + 100) / 2}%`,
     top: `${(agent.y + 100) / 2}%`,
     "--agent-pulse": String(0.72 + agent.pulse * 0.48),
+    "--agent-size": `${18 + agent.radius * 1.65}px`,
+    "--agent-impact": String(agent.impact),
   };
+}
+
+function measureRenderFps(timestamp: number) {
+  if (!fpsSampleStarted) fpsSampleStarted = timestamp;
+  fpsFrames += 1;
+  const elapsed = timestamp - fpsSampleStarted;
+  if (elapsed >= 500) {
+    renderFps.value = Math.round((fpsFrames * 1000) / elapsed);
+    fpsSampleStarted = timestamp;
+    fpsFrames = 0;
+  }
+  animationFrame = requestAnimationFrame(measureRenderFps);
 }
 
 onMounted(() => {
   clock = setInterval(() => {
     if (ready.value && world.value.running) dispatch("tick", 1);
-  }, 120);
+  }, fixedStepMs);
+  animationFrame = requestAnimationFrame(measureRenderFps);
 });
 
 onBeforeUnmount(() => {
   if (clock) clearInterval(clock);
+  if (animationFrame !== undefined) cancelAnimationFrame(animationFrame);
 });
 </script>
 
@@ -104,7 +132,7 @@ onBeforeUnmount(() => {
           <section class="bevy-console" aria-label="Interactive Bevy ECS world inspector">
             <header class="bevy-topline">
               <div><i :data-running="world.running"></i><span>world://headless/lab-01</span></div>
-              <div><b>{{ world.running ? "SCHEDULE RUNNING" : "SCHEDULE PAUSED" }}</b><span>NO RENDERER</span><span>0 ASSETS</span></div>
+              <div><b>{{ world.running ? "SCHEDULE RUNNING" : "SCHEDULE PAUSED" }}</b><span>CUSTOM CONTACT SOLVER</span><span>NO GPU COMPUTE</span></div>
             </header>
 
             <div class="bevy-layout">
@@ -119,6 +147,7 @@ onBeforeUnmount(() => {
                     class="bevy-agent"
                     :class="`faction-${agent.faction.toLowerCase()}`"
                     :style="agentStyle(agent)"
+                    :data-impact="agent.impact > 0.2"
                     :aria-pressed="agent.selected"
                     :aria-label="`Agent ${agent.id}, ${agent.faction}, ${Math.round(agent.energy)} percent energy`"
                     @click="runAction('select', agent.id)"
@@ -138,6 +167,8 @@ onBeforeUnmount(() => {
                     <div><dt>POSITION.Y</dt><dd>{{ selectedAgent.y.toFixed(2) }}</dd></div>
                     <div><dt>FACTION</dt><dd>{{ selectedAgent.faction }}</dd></div>
                     <div><dt>PULSE</dt><dd>{{ selectedAgent.pulse.toFixed(2) }}</dd></div>
+                    <div><dt>RADIUS</dt><dd>{{ selectedAgent.radius.toFixed(2) }}</dd></div>
+                    <div><dt>IMPACT</dt><dd>{{ selectedAgent.impact.toFixed(2) }}</dd></div>
                   </dl>
                 </div>
                 <section class="bevy-schedule">
@@ -149,9 +180,11 @@ onBeforeUnmount(() => {
 
             <section class="bevy-metrics" aria-label="Bevy world metrics">
               <div><span>WORLD TICK</span><strong>{{ String(world.tick).padStart(5, "0") }}</strong></div>
+              <div><span>HOST RENDER</span><strong>{{ renderFps || "—" }}<small>FPS</small></strong></div>
+              <div><span>ECS FIXED STEP</span><strong>{{ fixedStepHz }}<small>HZ</small></strong></div>
               <div><span>ENTITIES</span><strong>{{ String(world.entity_count).padStart(2, "0") }}<small>/48</small></strong></div>
+              <div><span>CONTACTS</span><strong>{{ world.contacts_last_step }}<small>/{{ world.contacts_total }}</small></strong></div>
               <div><span>AVG ENERGY</span><strong>{{ Math.round(world.average_energy) }}<small>%</small></strong></div>
-              <div><span>CHECKSUM</span><strong>{{ world.checksum.toString(16).toUpperCase().padStart(6, "0") }}</strong></div>
             </section>
 
             <footer class="bevy-controls">
@@ -173,24 +206,24 @@ onBeforeUnmount(() => {
       </CaseLiveWorkbench>
 
       <div class="under-preview">
-        <p><b>Real Bevy, deliberately headless.</b> This uses Bevy ECS World and Schedule; it does not pretend to be the renderer, editor, asset server, or full DefaultPlugins stack.</p>
+        <p><b>Real Bevy ECS, case-authored collision math.</b> Bevy supplies World storage, component queries, resources, and ordered scheduling. The elastic pair-contact solver is ordinary Rust in this case—not Bevy Physics, Rapier, a renderer, or GPU compute.</p>
         <div><a href="https://bevy.org/news/bevy-0-18/" target="_blank" rel="noreferrer">Bevy 0.18 ↗</a><a href="https://github.com/vooyajs/vooya-lab/tree/main/cases/simulation/bevy-world-inspector" target="_blank" rel="noreferrer">View repository ↗</a></div>
       </div>
 
       <div class="case-section-title"><span>02 — Why this boundary?</span><span>HOST PRODUCT · BEVY WORLD · FUTURE GPU</span></div>
       <section class="case-boundary" aria-label="Host, Bevy ECS, and GPU responsibility boundary">
-        <div class="boundary-lead"><strong>BRING THE WORLD, KEEP THE APP</strong><p>{{ manifest.question }} The point is ecosystem and lifecycle reuse—not rebuilding a small array animation with a much larger dependency.</p></div>
+        <div class="boundary-lead"><strong>BRING THE WORLD, KEEP THE APP</strong><p>{{ manifest.question }} Bevy ECS organizes the state and seven-system pipeline; this case implements the bounded O(n²) elastic contact solver so its cost and ownership remain inspectable.</p></div>
         <div class="boundary-flow">
           <section><span>01 · VUE / HOST</span><h2>Product inspector</h2><p>{{ manifest.proof.hostOwns.join(' · ') }}</p></section>
           <section><span>02 · BEVY / WASM</span><h2>Headless world</h2><p>{{ manifest.proof.rustOwns.join(' · ') }}</p></section>
-          <section><span>03 · WEBGL2 / WEBGPU</span><h2>Next collaborator</h2><p>A later renderer may consume a compact world projection. It should own rasterization while Bevy ECS keeps simulation ownership.</p></section>
+          <section><span>03 · WEBGL2 / WEBGPU</span><h2>Scale collaborator</h2><p>GPU APIs should own rasterization and may help very large uniform particle workloads. At 48 branch-heavy bodies, CPU ECS avoids upload, readback, synchronization, and GPU atomics.</p></section>
         </div>
         <div class="boundary-foot"><span><b>Crossing:</b> {{ manifest.proof.boundary.inputs.join(' + ') }} → {{ manifest.proof.boundary.outputs.join(' + ') }}</span><span>{{ manifest.proof.boundary.updatePattern }}</span></div>
       </section>
 
       <section class="case-notes">
-        <div><span>WHAT THIS PROVES</span><p>An exact, feature-configured Bevy ECS crate compiles through the ordinary Vooya dependency path and runs World, Resource, Component, Query, Schedule, Store subscription, and disposal semantics in browser WASM.</p></div>
-        <div><span>WHAT IT EXPOSED</span><p>Bevy ECS 0.19.x already requires a newer compiler than the selected toolchain, and adding one headless crate increased the shared WASM by roughly 506 KB raw. Many cases require per-case artifact isolation.</p></div>
+        <div><span>WHAT BEVY PROVIDES</span><p>World and archetype storage, typed Components and Resources, pairwise mutable Query access, and an explicit ordered Schedule. It does not provide the contact equations used here; a production physics case should integrate Rapier or Avian.</p></div>
+        <div><span>WHY NOT JUST WEBGPU?</span><p>GPU compute wins when parallel work is large and regular enough to amortize transfers and synchronization. This small interactive world is dominated by branching contacts, state mutation, host interaction, and lifecycle ownership—not shader throughput.</p></div>
       </section>
     </div>
   </article>

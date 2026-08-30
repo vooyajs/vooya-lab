@@ -17,14 +17,16 @@
 .bevy-grid > p { position: absolute; inset: 0; display: grid; margin: 0; place-items: center; color: var(--lab-faint); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
 .bevy-axis { position: absolute; z-index: 1; color: rgba(73, 225, 231, .4); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; }
 .bevy-axis.x { right: 8px; top: calc(50% + 6px); }.bevy-axis.y { left: calc(50% + 7px); top: 7px; }
-.bevy-agent { --agent-color: var(--lab-cyan); position: absolute; z-index: 2; display: grid; width: 25px; height: 25px; padding: 0; place-items: center; border: 0; border-radius: 50%; color: var(--agent-color); background: transparent; cursor: pointer; transform: translate(-50%, -50%) scale(var(--agent-pulse)); transition: transform 120ms linear; }
+.bevy-agent { --agent-color: var(--lab-cyan); position: absolute; z-index: 2; display: grid; width: var(--agent-size); height: var(--agent-size); padding: 0; place-items: center; border: 0; border-radius: 50%; color: var(--agent-color); background: transparent; cursor: pointer; transform: translate(-50%, -50%) scale(var(--agent-pulse)); transition: left 40ms linear, top 40ms linear, transform 40ms linear; }
 .bevy-agent > i { position: absolute; inset: 6px; border: 1px solid currentColor; border-radius: 50%; background: currentColor; box-shadow: 0 0 12px currentColor; }
-.bevy-agent > span { position: absolute; top: 22px; color: currentColor; font: 9px ui-monospace, SFMono-Regular, Menlo, monospace; opacity: .52; }
+.bevy-agent > span { position: absolute; top: calc(100% - 2px); color: currentColor; font: 9px ui-monospace, SFMono-Regular, Menlo, monospace; opacity: .52; }
+.bevy-agent::after { position: absolute; inset: -7px; border: 1px solid currentColor; border-radius: 50%; content: ""; opacity: 0; pointer-events: none; }
+.bevy-agent[data-impact="true"]::after { animation: bevy-impact 240ms ease-out both; }
 .bevy-agent:hover, .bevy-agent[aria-pressed="true"] { z-index: 3; transform: translate(-50%, -50%) scale(1.28); }
 .bevy-agent[aria-pressed="true"]::before { position: absolute; inset: 1px; border: 1px solid currentColor; border-radius: 50%; content: ""; box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 12%, transparent); }
 .bevy-agent.faction-acid { --agent-color: var(--lab-acid); }.bevy-agent.faction-violet { --agent-color: var(--lab-violet); }
 .bevy-inspector { display: flex; min-height: 0; flex-direction: column; background: rgba(8, 13, 13, .82); }
-.bevy-selected { flex: none; min-height: 194px; padding: 15px; border-bottom: 1px solid var(--lab-line); }
+.bevy-selected { flex: none; min-height: 218px; padding: 15px; border-bottom: 1px solid var(--lab-line); }
 .bevy-selected > span, .bevy-energy b { color: var(--lab-faint); font: var(--lab-text-meta) ui-monospace, SFMono-Regular, Menlo, monospace; }
 .bevy-selected h2 { min-height: 42px; margin: 9px 0 15px; color: #f4f7f1; font: 400 27px/1 "Instrument Serif", Iowan Old Style, Georgia, serif; letter-spacing: -.025em; }
 .bevy-energy > span { display: flex; align-items: center; justify-content: space-between; }.bevy-energy output { color: var(--lab-acid); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; }
@@ -38,11 +40,12 @@
 .bevy-schedule ol { height: calc(100% - 36px); margin: 0; padding: 0; overflow: auto; scrollbar-gutter: stable; list-style: none; }
 .bevy-schedule li { display: grid; grid-template-columns: 25px 1fr 8px; gap: 8px; align-items: center; min-height: 31px; padding: 0 15px; border-top: 1px solid rgba(107, 126, 115, .13); color: var(--lab-muted); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; }
 .bevy-schedule li > span { color: var(--lab-faint); }.bevy-schedule li > b { font-weight: 500; }.bevy-schedule li > i { width: 5px; height: 5px; border-radius: 50%; background: var(--lab-acid); box-shadow: 0 0 7px rgba(190, 255, 48, .45); }
-.bevy-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); flex: none; border-top: 1px solid var(--lab-line-strong); border-bottom: 1px solid var(--lab-line-strong); background: #09100f; }
+.bevy-metrics { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); flex: none; border-top: 1px solid var(--lab-line-strong); border-bottom: 1px solid var(--lab-line-strong); background: #09100f; }
 .bevy-metrics > div { display: flex; min-width: 0; min-height: 54px; padding: 8px 13px; flex-direction: column; justify-content: space-between; border-right: 1px solid var(--lab-line); }
 .bevy-metrics > div:last-child { border-right: 0; }.bevy-metrics span { color: var(--lab-faint); font: var(--lab-text-meta) ui-monospace, SFMono-Regular, Menlo, monospace; }.bevy-metrics strong { overflow: hidden; color: var(--lab-cyan); font: 400 19px/1 ui-monospace, SFMono-Regular, Menlo, monospace; text-overflow: ellipsis; }.bevy-metrics small { margin-left: 3px; color: var(--lab-faint); font-size: 10px; }
 .bevy-controls { display: flex; flex: none; align-items: center; justify-content: space-between; gap: 8px; min-height: 57px; padding: 9px 12px; background: #0b110e; }
 .bevy-controls > div { display: flex; gap: 5px; }.bevy-controls button { min-height: 36px; padding: 0 11px; border: 1px solid var(--lab-line-strong); color: var(--lab-muted); background: #101713; cursor: pointer; font: var(--lab-text-control) ui-monospace, SFMono-Regular, Menlo, monospace; white-space: nowrap; }.bevy-controls button:hover:not(:disabled) { border-color: var(--lab-cyan); color: var(--lab-ink); }.bevy-controls button:disabled { opacity: .32; cursor: not-allowed; }.bevy-controls button.primary { border-color: var(--lab-acid); color: #071009; background: var(--lab-acid); }.bevy-controls button.danger { color: #ff898d; }
 .bevy-world-page .under-preview > div { display: flex; flex-wrap: wrap; gap: 14px; }
 @media (max-width: 780px) { .bevy-topline > div:last-child span { display: none; }.bevy-layout { display: flex; overflow: auto; flex-direction: column; }.bevy-world-map { min-height: 330px; border-right: 0; border-bottom: 1px solid var(--lab-line); }.bevy-inspector { min-height: 300px; }.bevy-metrics { grid-template-columns: 1fr 1fr; }.bevy-controls { align-items: stretch; flex-direction: column; }.bevy-controls > div { display: grid; grid-template-columns: 1fr 1fr; }.bevy-world-page .case-title-row h1 { font-size: 52px; } }
-@media (prefers-reduced-motion: reduce) { .bevy-agent { transition: none; } }
+@keyframes bevy-impact { from { opacity: .95; transform: scale(.72); } to { opacity: 0; transform: scale(1.55); } }
+@media (prefers-reduced-motion: reduce) { .bevy-agent { transition: none; }.bevy-agent[data-impact="true"]::after { animation: none; opacity: .7; } }

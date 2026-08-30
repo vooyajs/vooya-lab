@@ -12,8 +12,9 @@
 
 ## User outcome
 
-Run, pause, single-step, inspect, spawn, and remove agents in a real headless
-Bevy ECS world while Vue renders the complete inspector and world projection.
+Run, pause, single-step, inspect, spawn, and remove elastically colliding agents
+in a real headless Bevy ECS world while Vue renders the complete inspector,
+impact feedback, timing metrics, and world projection.
 
 ## Question
 
@@ -32,7 +33,9 @@ world snapshot to an ordinary Vue product surface?
 ### Rust/WASM owns
 
 - the Bevy `World`, entity/component storage, resources, and `Schedule`;
-- deterministic movement, boundary, energy, and pulse systems;
+- deterministic movement, boundary, pair-contact, impact, energy, and pulse systems;
+- a case-authored equal-mass elastic collision solver using Bevy mutable pair
+  queries; Bevy ECS does not claim to be the physics engine;
 - spawn/despawn semantics, stable public agent ids, selection validity, and
   the structured public world snapshot.
 
@@ -40,20 +43,23 @@ world snapshot to an ordinary Vue product surface?
 
 `complement`
 
-This first stage is deliberately headless and host-rendered. A later Bevy
-WebGL2/WebGPU renderer could consume the same world or a compact render
-projection. It would complement ECS scheduling; it would not replace the world
-or make this first slice a GPU benchmark.
+This first stage is deliberately headless and host-rendered. Its maximum 48
+bodies use an inspectable O(n²) CPU contact pass: small, branch-heavy, mutating
+work where GPU upload/readback, synchronization, and atomic resolution would
+dominate. A later WebGL2/WebGPU renderer could consume the same world or compact
+render projection. Much larger, regular particle workloads may justify GPU
+compute or a spatial broad phase, but that is a different measured boundary.
 
 ### Boundary crossing
 
 - Inputs: coarse actions (`tick`, `toggle_running`, `select`, `spawn_agent`,
   `despawn_selected`, `reset`) with primitive arguments.
 - Outputs: one cached structured snapshot containing the world tick, running
-  state, system/entity counts, selected id, and at most 48 visible agent
-  projections.
-- Update pattern: while running, Vue requests one bounded ECS step every 120ms;
+  state, system/entity/contact counts, selected id, impact state, and at most 48
+  visible agent projections.
+- Update pattern: while running, Vue requests one bounded ECS step every 40ms;
   Rust runs its schedule and publishes one coalesced snapshot notification.
+  Host `requestAnimationFrame` measures presentation FPS independently.
 
 ### Vooya value
 
@@ -73,8 +79,9 @@ or make this first slice a GPU benchmark.
 ## Experience and source
 
 - Live Workbench: fixed-height Preview/Source surface with container-aware tabs.
-- Preview: a headless-world console, spatial agent projection, selected-entity
-  inspector, system schedule, metrics, and playback controls.
+- Preview: a headless-world console, spatial agent projection, collision rings,
+  selected-entity inspector, system schedule, host FPS/ECS rate/contact metrics,
+  and playback controls.
 - Controls and reset: run/pause, single step, select, spawn, despawn, and reset.
 - Source files: Rust Bevy Store, Vue host, case CSS, manifest, spec, and entry.
 - Copy/install action: active-file copy only; the case is not dependency-complete
@@ -120,6 +127,8 @@ packed precompiled-consumer contract must be measured before copy/package claims
 - [x] Real Bevy `World`, components, resources, and `Schedule` execute
 - [x] Run, pause, step, select, spawn, despawn, and reset update snapshots
 - [x] Snapshot entity count stays bounded at 48
+- [x] Pairwise elastic contacts mutate velocity/position and publish impact/count evidence
+- [x] Host render FPS is measured separately from the fixed ECS step rate
 - [ ] Deterministic dispose/remount with two independent instances
 - [x] Public **Why this boundary?** explanation
 - [x] Focused browser evidence
@@ -143,13 +152,16 @@ Evidence locations:
 - [vooyajs/vooya#106](https://github.com/vooyajs/vooya/issues/106): lazy,
   isolated WASM artifacts for independent authored roots. This case supplied the
   first measured heavy-route payload evidence.
+- [vooyajs/vooya#107](https://github.com/vooyajs/vooya/issues/107): Rust HMR
+  rebuild cleanup may race and fail with `ENOTEMPTY`; restarting Vite recovers
+  the generated application workspace.
 - The published alpha.10 Vue generated-hook runtime mismatch remains covered by
   the beta release evidence in Core issue #26; this case uses `useVooyaStore`.
 - The Lab still compiles selected Rust cases into one shared authored entry.
   Artifact-size and case-isolation findings must decide whether this is a Lab
   registry concern or a Core precompiled-artifact concern.
-- No renderer, assets, Bevy `App`, plugins, time integration, Worker execution,
-  React parity, or shared runtime is claimed by the headless slice.
+- No renderer, assets, Bevy `App`, physics plugin, parallel schedule, Worker
+  execution, React parity, or shared runtime is claimed by the headless slice.
 
 ## Extraction decision
 
@@ -159,6 +171,8 @@ independent consumer or a lifecycle that can be specified without Lab imports.
 ## Non-goals
 
 - Claiming this is the full Bevy engine or renderer.
+- Claiming the case-authored contact system is Bevy Physics, Rapier, or Avian.
+- Claiming that CPU ECS universally beats GPU compute or a spatial broad phase.
 - Claiming ECS is faster than an array-based TypeScript demo.
 - Solving one-engine-per-component versus shared-runtime architecture yet.
 - Adding dependency-specific translation or patching Bevy to make the case pass.

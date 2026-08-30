@@ -5,6 +5,7 @@ use vooya as voo;
 const INITIAL_AGENTS: u32 = 24;
 const MAX_AGENTS: u32 = 48;
 const WORLD_LIMIT: f32 = 94.0;
+const RESTITUTION: f32 = 0.92;
 
 #[derive(Component)]
 struct AgentId(u32);
@@ -22,6 +23,14 @@ struct Velocity {
 }
 
 #[derive(Component)]
+struct Collider {
+    radius: f32,
+}
+
+#[derive(Component)]
+struct Impact(f32);
+
+#[derive(Component)]
 struct Energy(f32);
 
 #[derive(Component)]
@@ -36,6 +45,12 @@ struct SimClock {
     dt: f32,
 }
 
+#[derive(Resource, Default)]
+struct CollisionStats {
+    contacts_last_step: u32,
+    contacts_total: u32,
+}
+
 #[derive(voo::ToJs, PartialEq, Clone)]
 pub struct AgentProjection {
     pub id: u32,
@@ -44,6 +59,8 @@ pub struct AgentProjection {
     pub energy: f32,
     pub faction: String,
     pub pulse: f32,
+    pub radius: f32,
+    pub impact: f32,
     pub selected: bool,
 }
 
@@ -57,6 +74,8 @@ pub struct BevyWorldSnapshot {
     pub selected_label: String,
     pub selected_energy: f32,
     pub average_energy: f32,
+    pub contacts_last_step: u32,
+    pub contacts_total: u32,
     pub checksum: u32,
     pub agents: Vec<AgentProjection>,
 }
@@ -73,13 +92,16 @@ pub struct BevyWorld {
 impl Default for BevyWorld {
     fn default() -> Self {
         let mut world = World::new();
-        world.insert_resource(SimClock { tick: 0, dt: 0.72 });
+        world.insert_resource(SimClock { tick: 0, dt: 0.24 });
+        world.insert_resource(CollisionStats::default());
 
         let mut schedule = Schedule::default();
         schedule.add_systems(
             (
+                impact_decay_system,
                 movement_system,
                 boundary_system,
+                collision_system,
                 energy_system,
                 pulse_system,
                 clock_system,
@@ -176,6 +198,8 @@ impl BevyWorld {
                 let energy = entity_ref.get::<Energy>()?.0;
                 let faction = entity_ref.get::<Faction>()?.0;
                 let pulse = entity_ref.get::<Pulse>()?.0;
+                let radius = entity_ref.get::<Collider>()?.radius;
+                let impact = entity_ref.get::<Impact>()?.0;
                 Some(AgentProjection {
                     id,
                     x: position.x,
@@ -183,6 +207,8 @@ impl BevyWorld {
                     energy,
                     faction: faction_name(faction).to_owned(),
                     pulse,
+                    radius,
+                    impact,
                     selected: id == self.selected_id,
                 })
             })
@@ -203,17 +229,21 @@ impl BevyWorld {
                 .wrapping_add((agent.y.abs() * 10.0) as u32)
         });
 
+        let collision_stats = self.world.resource::<CollisionStats>();
+
         BevyWorldSnapshot {
             tick: self.world.resource::<SimClock>().tick,
             running: self.running,
             entity_count,
-            system_count: 5,
+            system_count: 7,
             selected_id: self.selected_id,
             selected_label: selected
                 .map(|agent| format!("{} AGENT {:02}", agent.faction, agent.id))
                 .unwrap_or_else(|| "NO SELECTION".to_owned()),
             selected_energy: selected.map(|agent| agent.energy).unwrap_or(0.0),
             average_energy,
+            contacts_last_step: collision_stats.contacts_last_step,
+            contacts_total: collision_stats.contacts_total,
             checksum,
             agents,
         }
@@ -231,22 +261,47 @@ impl BevyWorld {
         let id = self.next_id;
         self.next_id += 1;
         let faction = (id % 3) as u8;
-        let x = ((id.wrapping_mul(37) % 181) as f32) - 90.0;
-        let y = ((id.wrapping_mul(61) % 173) as f32) - 86.0;
-        let speed = 0.8 + (id % 7) as f32 * 0.13;
+        let (x, y, velocity_x, velocity_y) = if id <= INITIAL_AGENTS {
+            let pair = (id - 1) / 2;
+            let angle = pair as f32 * std::f32::consts::PI / (INITIAL_AGENTS / 2) as f32;
+            let normal_x = angle.cos();
+            let normal_y = angle.sin();
+            let side = if id % 2 == 1 { 1.0 } else { -1.0 };
+            let distance = 24.0 + (pair % 4) as f32 * 6.0;
+            let speed = 2.2 + (pair % 3) as f32 * 0.22;
+            (
+                normal_x * distance * side,
+                normal_y * distance * side,
+                -normal_x * speed * side - normal_y * 0.12,
+                -normal_y * speed * side + normal_x * 0.12,
+            )
+        } else {
+            let x = ((id.wrapping_mul(37) % 181) as f32) - 90.0;
+            let y = ((id.wrapping_mul(61) % 173) as f32) - 86.0;
+            let speed = 0.8 + (id % 7) as f32 * 0.13;
+            (
+                x,
+                y,
+                if id % 2 == 0 { speed } else { -speed },
+                if id % 3 == 0 {
+                    -speed * 0.72
+                } else {
+                    speed * 0.72
+                },
+            )
+        };
+        let radius = 4.2 + (id % 4) as f32 * 0.55;
         let entity = self
             .world
             .spawn((
                 AgentId(id),
                 Position { x, y },
                 Velocity {
-                    x: if id % 2 == 0 { speed } else { -speed },
-                    y: if id % 3 == 0 {
-                        -speed * 0.72
-                    } else {
-                        speed * 0.72
-                    },
+                    x: velocity_x,
+                    y: velocity_y,
                 },
+                Collider { radius },
+                Impact(0.0),
                 Energy(68.0 + (id % 29) as f32),
                 Faction(faction),
                 Pulse((id % 10) as f32 / 10.0),
@@ -275,16 +330,79 @@ fn movement_system(mut agents: Query<(&mut Position, &Velocity)>, clock: Res<Sim
     }
 }
 
-fn boundary_system(mut agents: Query<(&mut Position, &mut Velocity)>) {
-    for (mut position, mut velocity) in &mut agents {
-        if position.x.abs() >= WORLD_LIMIT {
-            position.x = position.x.clamp(-WORLD_LIMIT, WORLD_LIMIT);
+fn impact_decay_system(mut agents: Query<&mut Impact>) {
+    for mut impact in &mut agents {
+        impact.0 *= 0.72;
+    }
+}
+
+fn boundary_system(mut agents: Query<(&mut Position, &mut Velocity, &Collider)>) {
+    for (mut position, mut velocity, collider) in &mut agents {
+        let limit = WORLD_LIMIT - collider.radius;
+        if position.x.abs() >= limit {
+            position.x = position.x.clamp(-limit, limit);
             velocity.x *= -1.0;
         }
-        if position.y.abs() >= WORLD_LIMIT {
-            position.y = position.y.clamp(-WORLD_LIMIT, WORLD_LIMIT);
+        if position.y.abs() >= limit {
+            position.y = position.y.clamp(-limit, limit);
             velocity.y *= -1.0;
         }
+    }
+}
+
+fn collision_system(
+    mut agents: Query<(
+        &AgentId,
+        &mut Position,
+        &mut Velocity,
+        &Collider,
+        &mut Impact,
+    )>,
+    mut stats: ResMut<CollisionStats>,
+) {
+    stats.contacts_last_step = 0;
+    let mut combinations = agents.iter_combinations_mut::<2>();
+
+    while let Some(
+        [(id_a, mut position_a, mut velocity_a, collider_a, mut impact_a), (id_b, mut position_b, mut velocity_b, collider_b, mut impact_b)],
+    ) = combinations.fetch_next()
+    {
+        let delta_x = position_b.x - position_a.x;
+        let delta_y = position_b.y - position_a.y;
+        let minimum_distance = collider_a.radius + collider_b.radius;
+        let distance_squared = delta_x * delta_x + delta_y * delta_y;
+        if distance_squared >= minimum_distance * minimum_distance {
+            continue;
+        }
+
+        let (distance, normal_x, normal_y) = if distance_squared > 0.0001 {
+            let distance = distance_squared.sqrt();
+            (distance, delta_x / distance, delta_y / distance)
+        } else {
+            (0.0, if id_a.0 < id_b.0 { 1.0 } else { -1.0 }, 0.0)
+        };
+
+        let overlap = minimum_distance - distance;
+        position_a.x -= normal_x * overlap * 0.5;
+        position_a.y -= normal_y * overlap * 0.5;
+        position_b.x += normal_x * overlap * 0.5;
+        position_b.y += normal_y * overlap * 0.5;
+
+        let relative_x = velocity_b.x - velocity_a.x;
+        let relative_y = velocity_b.y - velocity_a.y;
+        let velocity_along_normal = relative_x * normal_x + relative_y * normal_y;
+        if velocity_along_normal < 0.0 {
+            let impulse = -(1.0 + RESTITUTION) * velocity_along_normal * 0.5;
+            velocity_a.x -= impulse * normal_x;
+            velocity_a.y -= impulse * normal_y;
+            velocity_b.x += impulse * normal_x;
+            velocity_b.y += impulse * normal_y;
+        }
+
+        impact_a.0 = 1.0;
+        impact_b.0 = 1.0;
+        stats.contacts_last_step = stats.contacts_last_step.saturating_add(1);
+        stats.contacts_total = stats.contacts_total.saturating_add(1);
     }
 }
 
