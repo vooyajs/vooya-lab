@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { ref } from "vue";
 import type { LabCaseManifest } from "@vooya-lab/case-schema";
 import { VooyaWorkbench } from "@vooya-lab/ide";
 import manifestData from "./case.json";
@@ -12,9 +12,7 @@ const manifest = manifestData as LabCaseManifest;
 const implementation = ref<"vooya" | "javascript">("vooya");
 const points = ref(150_000);
 const zoom = ref(1);
-const copyState = ref("Copy component");
 const rustEntryPath = "cases/examples/scatter-plot/src/ScatterPlot.rs";
-const rustSource = computed(() => sourceFiles.find((file) => file.path === rustEntryPath)?.content ?? "");
 
 function resetPreview() {
   points.value = 150_000;
@@ -22,11 +20,6 @@ function resetPreview() {
   implementation.value = "vooya";
 }
 
-async function copyComponent() {
-  await navigator.clipboard.writeText(rustSource.value);
-  copyState.value = "Copied";
-  window.setTimeout(() => { copyState.value = "Copy component"; }, 1600);
-}
 </script>
 
 <template>
@@ -61,7 +54,7 @@ async function copyComponent() {
       </section>
       <div class="under-preview">
         <p><b>Honest comparison.</b> A mature Rust R-tree is compared with a transparent JavaScript scan; this is not a universal Rust-versus-JavaScript benchmark.</p>
-        <div><a href="https://github.com/vooyajs/vooya-lab/tree/main/cases/examples/scatter-plot" target="_blank" rel="noreferrer">View source ↗</a><button type="button" @click="copyComponent">{{ copyState }}</button></div>
+        <div><a href="https://github.com/vooyajs/vooya-lab/tree/main/cases/examples/scatter-plot" target="_blank" rel="noreferrer">View repository ↗</a></div>
       </div>
 
       <div class="case-section-title"><span>02 — Why this boundary?</span><span>CPU INDEX · HOST UI</span></div>

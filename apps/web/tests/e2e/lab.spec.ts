@@ -27,6 +27,40 @@ test("case directory filters, collapses, and expands without replacing the page"
   await expect(directory).toHaveAttribute("aria-hidden", "false");
 });
 
+test("the shell keeps window fixed while content and active navigation scroll independently", async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 420 });
+  await page.goto("/#/cases/examples/scatter-plot");
+
+  const main = page.locator(".lab-main");
+  const directoryGroups = page.locator(".directory-groups");
+  await expect(main).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(420);
+  expect(await page.evaluate(() => document.body.scrollHeight)).toBe(420);
+
+  const mainMetrics = await main.evaluate((element) => ({
+    clientHeight: element.clientHeight,
+    scrollHeight: element.scrollHeight,
+  }));
+  expect(mainMetrics.scrollHeight).toBeGreaterThan(mainMetrics.clientHeight);
+  await main.hover({ position: { x: 500, y: 250 } });
+  await page.mouse.wheel(0, 800);
+  await expect.poll(() => main.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+
+  await directoryGroups.evaluate((element) => { element.scrollTop = element.scrollHeight; });
+  await page.evaluate(() => { window.location.hash = "#/cases/data/log-atlas"; });
+  const activeDirectoryCase = page.locator('.directory-case[aria-current="page"]');
+  await expect(activeDirectoryCase).toContainText("Log Atlas");
+  await expect.poll(() => main.evaluate((element) => element.scrollTop)).toBe(0);
+  await expect.poll(async () => activeDirectoryCase.evaluate((active) => {
+    const scroller = active.closest(".directory-groups");
+    if (!scroller) return false;
+    const activeRect = active.getBoundingClientRect();
+    const scrollerRect = scroller.getBoundingClientRect();
+    return activeRect.top >= scrollerRect.top && activeRect.bottom <= scrollerRect.bottom;
+  })).toBe(true);
+});
+
 test("Gallery keeps tooling experiments out of its public navigation", async ({ page }) => {
   await page.goto("/#/");
   await expect(page.getByRole("heading", { name: "Rspack in the Browser" })).toHaveCount(0);
@@ -71,10 +105,13 @@ test("isolated preview host mounts, replaces, and disposes a real Vooya artifact
 
 test("generated scatter route compares implementations and exposes a gated workbench", async ({ page }) => {
   await page.goto("/#/cases/examples/scatter-plot");
+  const preview = page.getByRole("region", { name: "Interactive R-tree scatter preview" });
+  const previewHeight = await preview.evaluate((element) => element.getBoundingClientRect().height);
   await expect(page.getByText("Rust R-tree", { exact: true })).toBeVisible();
   await page.locator(".rust-scatter canvas[data-scatter-canvas]").hover({ position: { x: 320, y: 120 } });
   await expect(page.locator(".rust-scatter .scatter-query")).toContainText("nearest");
   await page.getByRole("button", { name: "JAVASCRIPT", exact: true }).click();
+  await expect.poll(() => preview.evaluate((element) => element.getBoundingClientRect().height)).toBe(previewHeight);
   await expect(page.locator(".baseline-scatter").getByText("JS linear scan")).toBeVisible();
   await page.locator(".baseline-scatter canvas").hover({ position: { x: 320, y: 120 } });
   await expect(page.locator(".baseline-scatter .scatter-query")).toContainText("nearest");
@@ -91,6 +128,20 @@ test("generated scatter route compares implementations and exposes a gated workb
   await expect(page.getByRole("tab", { name: /DemoPage\.vue/ })).toBeVisible();
   await expect(page.locator(".vooya-ide-editor-host .cm-content")).toContainText("ScatterPlot");
   await expect(page.locator(".vooya-ide-editor-host .cm-content")).toHaveAttribute("contenteditable", "false");
+  const editorScroller = page.locator(".vooya-ide-editor-host .cm-scroller");
+  const editorMetrics = await editorScroller.evaluate((element) => ({
+    clientHeight: element.clientHeight,
+    scrollHeight: element.scrollHeight,
+  }));
+  expect(editorMetrics.scrollHeight).toBeGreaterThan(editorMetrics.clientHeight);
+  await editorScroller.hover({ position: { x: 300, y: 200 } });
+  await page.mouse.wheel(0, 900);
+  await expect.poll(() => editorScroller.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  const copyButton = page.locator(".vooya-workbench-toolbar [data-copy-action]");
+  await expect(copyButton).toBeVisible();
+  await expect(copyButton).toHaveText("Copy active file");
+  await copyButton.click();
+  await expect(copyButton).toHaveText("Copied · DemoPage.vue");
 
   for (const fileName of ["ScatterPlot.css", "case.json", "index.ts", "ScatterBaseline.vue"]) {
     await explorer.getByRole("treeitem", { name: fileName, exact: true }).click();
@@ -111,16 +162,20 @@ test("Log Atlas keeps trace querying in the Vooya Rust component", async ({ page
   await page.goto("/#/cases/data/log-atlas");
   await expect(page.getByRole("heading", { name: /Log Atlas/ })).toBeVisible();
   const engine = page.locator(".log-atlas-engine");
+  const preview = page.getByRole("region", { name: "Interactive Log Atlas trace preview" });
+  const previewHeight = await preview.evaluate((element) => element.getBoundingClientRect().height);
   await expect(engine.getByText("WASM-RESIDENT TRACE INDEX")).toBeVisible();
   await expect(engine.locator(".atlas-row").first()).toBeVisible();
   const initialSummary = await engine.locator(".atlas-engine-header > div").first().innerText();
 
   await page.getByRole("button", { name: "ERRORS", exact: true }).click();
+  await expect.poll(() => preview.evaluate((element) => element.getBoundingClientRect().height)).toBe(previewHeight);
   await expect(engine.locator(".atlas-row.is-error").first()).toBeVisible();
   await expect(engine.locator(".atlas-engine-header > div").first()).not.toHaveText(initialSummary);
 
   await page.getByRole("textbox", { name: "Rust regex query" }).fill("[");
   await expect(engine.getByText("Query rejected by Rust regex")).toBeVisible();
+  await expect.poll(() => preview.evaluate((element) => element.getBoundingClientRect().height)).toBe(previewHeight);
   await page.getByRole("button", { name: "RESET", exact: true }).click();
   await expect(engine.getByText("Query rejected by Rust regex")).toHaveCount(0);
   await expect(page.getByRole("group", { name: "Trace query presets" }).getByRole("button", { name: "ALL", exact: true })).toHaveAttribute("aria-pressed", "true");

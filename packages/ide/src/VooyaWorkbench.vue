@@ -37,13 +37,19 @@ const emit = defineEmits<{
 }>();
 
 const workspace = ref<IdeFile[]>(props.files.map((file) => ({ ...file })));
+const activePath = ref(props.entryPath);
 const stage = ref<CompilerStage>("idle");
 const requestId = ref("");
 const statusMessage = ref("");
 const diagnostics = ref<CompilerDiagnostic[]>([]);
+const copyStatus = ref<"idle" | "copied" | "failed">("idle");
+let copyStatusTimer: ReturnType<typeof window.setTimeout> | undefined;
 
 const canCompile = computed(() => props.editable && props.executionMode === "browser-compiler" && Boolean(props.runner));
 const isRunning = computed(() => stage.value !== "idle" && !isTerminalStage(stage.value));
+const activeFile = computed(() => workspace.value.find((file) => file.path === activePath.value) ?? workspace.value[0]);
+const activeFileName = computed(() => activeFile.value?.path.split("/").pop() ?? "file");
+const copyLabel = computed(() => copyStatus.value === "copied" ? `Copied · ${activeFileName.value}` : copyStatus.value === "failed" ? "Copy failed" : "Copy active file");
 const capabilityLabel = computed(() => {
   if (!props.editable) return "PRECOMPILED · SOURCE LOCKED";
   if (props.executionMode !== "browser-compiler") return `${props.executionMode.toUpperCase()} · RUNNER REQUIRED`;
@@ -54,6 +60,32 @@ const capabilityLabel = computed(() => {
 function updateFile(path: string, content: string) {
   const file = workspace.value.find((item) => item.path === path);
   if (file) file.content = content;
+}
+
+async function copyActiveFile() {
+  if (!activeFile.value) return;
+  let copied = false;
+  try {
+    await navigator.clipboard.writeText(activeFile.value.content);
+    copied = true;
+  } catch {
+    const fallback = document.createElement("textarea");
+    fallback.value = activeFile.value.content;
+    fallback.setAttribute("readonly", "");
+    fallback.style.position = "fixed";
+    fallback.style.opacity = "0";
+    fallback.style.pointerEvents = "none";
+    document.body.append(fallback);
+    fallback.select();
+    try {
+      copied = document.execCommand("copy");
+    } finally {
+      fallback.remove();
+    }
+  }
+  copyStatus.value = copied ? "copied" : "failed";
+  if (copyStatusTimer) window.clearTimeout(copyStatusTimer);
+  copyStatusTimer = window.setTimeout(() => { copyStatus.value = "idle"; }, 1600);
 }
 
 function handleEvent(event: CompilerEvent) {
@@ -105,7 +137,12 @@ watch(() => props.files, (files) => {
   workspace.value = files.map((file) => ({ ...file }));
 }, { deep: true });
 
+watch(() => props.entryPath, (path) => {
+  activePath.value = path;
+});
+
 onBeforeUnmount(() => {
+  if (copyStatusTimer) window.clearTimeout(copyStatusTimer);
   if (requestId.value && !["idle", "succeeded", "failed", "cancelled", "terminated"].includes(stage.value)) {
     props.runner?.cancel(requestId.value);
   }
@@ -116,12 +153,13 @@ onBeforeUnmount(() => {
   <section class="vooya-workbench" :data-stage="stage" :data-editable="editable">
     <header class="vooya-workbench-toolbar">
       <div><span class="vooya-workbench-signal"></span><strong>{{ capabilityLabel }}</strong><small v-if="statusMessage">{{ statusMessage }}</small></div>
-      <div>
+      <div class="vooya-workbench-actions">
+        <button type="button" :disabled="!activeFile" :title="`Copy ${activeFileName}`" data-copy-action :data-copy-state="copyStatus" @click="copyActiveFile">{{ copyLabel }}</button>
         <button v-if="isRunning" type="button" @click="cancel">Cancel</button>
         <button type="button" :disabled="!canCompile || isRunning" :title="canCompile ? 'Compile the current virtual workspace' : 'This case remains precompiled until the browser compiler gate passes'" @click="compile">{{ actionLabel }}</button>
       </div>
     </header>
-    <VooyaIde :title="title" :files="workspace" :active-path="entryPath" :readonly="!editable" :height="height" @update:file-content="updateFile" />
+    <VooyaIde :title="title" :files="workspace" :active-path="activePath" :readonly="!editable" :height="height" @update:active-path="activePath = $event" @update:file-content="updateFile" />
     <footer class="vooya-workbench-output" aria-live="polite">
       <div><span>DIAGNOSTICS</span><b>{{ diagnostics.length }}</b></div>
       <p v-if="!diagnostics.length">{{ editable ? 'No diagnostics yet.' : 'Rust editing is disabled. This page mounts the repository-built artifact; the compiler control is intentionally unavailable.' }}</p>

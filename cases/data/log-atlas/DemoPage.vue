@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { ref } from "vue";
 import type { LabCaseManifest } from "@vooya-lab/case-schema";
 import { VooyaWorkbench } from "@vooya-lab/ide";
 import manifestData from "./case.json";
@@ -11,9 +11,7 @@ const manifest = manifestData as LabCaseManifest;
 const query = ref(".*");
 const minimumDuration = ref(300);
 const windowSize = ref(8_000);
-const copyState = ref("Copy Rust source");
 const rustEntryPath = "cases/data/log-atlas/src/LogAtlas.rs";
-const rustSource = computed(() => sourceFiles.find((file) => file.path === rustEntryPath)?.content ?? "");
 const presets = [
   { label: "ALL", value: ".*" },
   { label: "ERRORS", value: "error|5\\d\\d" },
@@ -27,11 +25,6 @@ function resetPreview() {
   windowSize.value = 8_000;
 }
 
-async function copyRustSource() {
-  await navigator.clipboard.writeText(rustSource.value);
-  copyState.value = "Copied";
-  window.setTimeout(() => { copyState.value = "Copy Rust source"; }, 1600);
-}
 </script>
 
 <template>
@@ -64,7 +57,7 @@ async function copyRustSource() {
       </section>
       <div class="under-preview">
         <p><b>No benchmark theatre.</b> This proves an integration shape and local-data ownership. It does not claim that Rust beats every JavaScript regex or log viewer.</p>
-        <div><a href="https://github.com/vooyajs/vooya-lab/tree/main/cases/data/log-atlas" target="_blank" rel="noreferrer">View source ↗</a><button type="button" @click="copyRustSource">{{ copyState }}</button></div>
+        <div><a href="https://github.com/vooyajs/vooya-lab/tree/main/cases/data/log-atlas" target="_blank" rel="noreferrer">View repository ↗</a></div>
       </div>
 
       <div class="case-section-title"><span>02 — Why this boundary?</span><span>IRREGULAR CPU WORK · HOST UI</span></div>
@@ -99,7 +92,7 @@ async function copyRustSource() {
 .atlas-preview-topline > div { display: flex; align-items: center; gap: 10px; }
 .atlas-preview-topline i { width: 6px; height: 6px; border-radius: 50%; background: var(--lab-cyan); box-shadow: 0 0 12px var(--lab-cyan); }
 .atlas-preview-topline b { color: var(--lab-acid); font-weight: 500; }
-.atlas-stage { min-height: 520px; }
+.atlas-stage { height: 520px; overflow: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
 .atlas-controls { display: grid; grid-template-columns: auto minmax(170px, 1fr) minmax(150px, .7fr) minmax(140px, .55fr) auto; gap: 10px; align-items: end; padding: 13px; border-top: 1px solid var(--lab-line-strong); background: #0d120f; }
 .atlas-presets { display: flex; gap: 4px; }
 .atlas-presets button, .atlas-controls > button { min-height: 34px; border: 1px solid var(--lab-line); padding: 0 10px; color: var(--lab-muted); background: #111813; cursor: pointer; font: 8px ui-monospace, SFMono-Regular, Menlo, monospace; }

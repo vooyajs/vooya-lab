@@ -68,11 +68,13 @@ crate reuse and workload shape, not language superiority.
 
 ## Experience and source
 
-- Preview: interactive point field with pointer nearest-neighbor queries.
+- Preview: interactive point field with pointer nearest-neighbor queries in a
+  stable-height stage when switching implementations.
 - Controls: implementation, point count, zoom, and reset.
 - Source: Rust, CSS, Vue host, baseline, metadata, and public case entry.
-- Copy/install: file viewing is supported; complete component copy is not yet
-  honest because the case depends on application internals.
+- Copy/install: the Workbench toolbar copies the currently active file; complete
+  component copy is not yet honest because the case depends on application
+  internals.
 - Source Workbench: read-only.
 
 ## Execution and isolation
@@ -110,8 +112,8 @@ the restructuring.
 ## Known gaps and upstream issues
 
 - No focused disposal/remount test or complete copy bundle exists.
-- `distribution.mode` remains `demo-only`; the Copy component action exposes the
-  primary Rust file, not a dependency-complete installable unit.
+- `distribution.mode` remains `demo-only`; active-file copy is intentionally not
+  presented as a dependency-complete installable unit.
 - Browser Rust editing remains intentionally disabled while compiler Gate 0 and
   Gate 1 evidence is incomplete.
 

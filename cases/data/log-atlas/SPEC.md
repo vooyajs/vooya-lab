@@ -70,12 +70,14 @@ No speed claim is made. The live proof is ownership and integration shape.
 
 ## Experience and source
 
-- Preview: spectral trace waterfall with service, route, duration, and status.
+- Preview: spectral trace waterfall with service, route, duration, and status in
+  a stable-height viewport; filters scroll inside the stage instead of shifting
+  the rest of the case page.
 - Controls: query presets, regex input, duration threshold, window, and reset.
 - Source files: Rust, scoped CSS, Vue host, metadata, spec, and case entry.
 - Props: `query`, `minimum_duration`, and `window`.
-- Copy/install: source inspection only until a dependency-complete copy bundle
-  and Cargo mutation path exist.
+- Copy/install: the Workbench toolbar can copy its currently active source file;
+  a dependency-complete copy bundle still waits on a Cargo mutation path.
 - Reduced motion: the case uses no required animation.
 - Small screens: row metadata collapses before the trace bars; controls wrap.
 

@@ -25,7 +25,8 @@ const files: IdeFile[] = [
 The low-level component emits `update:activePath` when navigation changes and
 `update:fileContent` with `(path, content)` after an edit. `VooyaWorkbench`
 composes the editor with a toolchain-neutral compiler runner, normalized state,
-diagnostics, cancellation, and artifact events. Precompiled cases pass
+diagnostics, cancellation, artifact events, and a toolbar action that copies the
+currently active file. Precompiled cases pass
 `editable=false`, which leaves compilation visibly and truthfully disabled.
 
 ## Scope

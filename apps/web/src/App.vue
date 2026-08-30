@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { RouterLink, RouterView, useRoute } from "vue-router";
 import { caseByRoute, registeredCases } from "./cases/registry";
 
@@ -18,6 +18,8 @@ const directoryExpanded = ref(true);
 const mobileOpen = ref(false);
 const activeSection = ref<LibrarySection>("all");
 const query = ref("");
+const directoryElement = ref<HTMLElement>();
+const mainElement = ref<HTMLElement>();
 
 const sectionLabels: Record<LibrarySection, string> = { all: "ALL", data: "DAT", graphics: "GFX", tools: "DEV" };
 
@@ -66,7 +68,18 @@ function chooseSection(section: LibrarySection) {
   directoryExpanded.value = true;
 }
 
-watch(() => route.fullPath, () => { mobileOpen.value = false; });
+async function syncRouteViewport() {
+  await nextTick();
+  mainElement.value?.scrollTo({ top: 0, left: 0 });
+  directoryElement.value
+    ?.querySelector<HTMLElement>('.directory-case[aria-current="page"]')
+    ?.scrollIntoView({ block: "nearest", inline: "nearest" });
+}
+
+watch(() => route.path, () => {
+  mobileOpen.value = false;
+  void syncRouteViewport();
+}, { immediate: true });
 </script>
 
 <template>
@@ -105,7 +118,7 @@ watch(() => route.fullPath, () => { mobileOpen.value = false; });
         <button v-for="(label, section) in sectionLabels" :key="section" type="button" :aria-pressed="activeSection === section" @click="chooseSection(section)">{{ label }}</button>
       </nav>
 
-      <aside id="case-directory" class="case-directory" aria-label="Case directory" :aria-hidden="!directoryExpanded" :inert="!directoryExpanded">
+      <aside ref="directoryElement" id="case-directory" class="case-directory" aria-label="Case directory" :aria-hidden="!directoryExpanded" :inert="!directoryExpanded">
         <div class="directory-meta"><span>Case library</span><span>{{ implementedItems.length + plannedItems.length }}</span><button type="button" aria-label="Collapse case directory" aria-controls="case-directory" :aria-expanded="directoryExpanded" @click="directoryExpanded = false">‹</button></div>
         <label class="directory-search"><span>⌕</span><input v-model="query" type="search" placeholder="Search cases…" aria-label="Search cases" /></label>
         <div class="directory-groups">
@@ -125,7 +138,7 @@ watch(() => route.fullPath, () => { mobileOpen.value = false; });
         </div>
       </aside>
 
-      <main class="lab-main">
+      <main ref="mainElement" class="lab-main">
         <div v-if="activeCase" class="mobile-case-context"><span>Case library / <b>{{ activeCase.manifest.title }}</b></span><span>{{ String(activeCaseIndex + 1).padStart(2, '0') }} / {{ implementedItems.length }}</span></div>
         <RouterView />
       </main>
