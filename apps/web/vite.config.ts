@@ -17,6 +17,11 @@ export default defineConfig({
         entry: "cases/lib.rs",
         sourceRoot: "cases",
         dependencies: {
+          bevy_ecs: {
+            version: "=0.18.1",
+            defaultFeatures: false,
+            features: ["std"],
+          },
           rstar: "0.12.2",
           regex: "=1.12.2",
         },

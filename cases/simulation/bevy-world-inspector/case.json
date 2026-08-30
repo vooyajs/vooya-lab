@@ -1,0 +1,38 @@
+{
+  "$schema": "../../case.schema.json",
+  "category": "simulation",
+  "slug": "bevy-world-inspector",
+  "title": "Bevy World Inspector",
+  "summary": "Run and inspect a real headless Bevy ECS world through an instance-scoped Vooya Rust Store while Vue owns the complete product interface.",
+  "tags": ["Bevy", "ECS", "simulation", "headless", "Rust Store", "Vue"],
+  "status": "experimental",
+  "portfolioClass": "showcase",
+  "question": "Can a feature-configured Bevy ECS crate compile through Vooya without dependency translation and expose a bounded world snapshot to Vue?",
+  "spec": "./SPEC.md",
+  "vooyaComponent": "./src/BevyWorld.rs",
+  "host": "./DemoPage.vue",
+  "interactions": ["run or pause the ECS schedule", "single-step the world", "select an agent", "spawn or despawn an agent", "reset the Store"],
+  "evidence": ["exact Bevy ECS Cargo version and features", "real World and Schedule execute in WASM", "Vue renders bounded nested snapshots", "focused browser test covers lifecycle actions"],
+  "execution": {
+    "mode": "precompiled",
+    "editable": false
+  },
+  "distribution": {
+    "mode": "demo-only",
+    "files": ["./src/BevyWorld.rs", "./src/BevyWorld.css", "./DemoPage.vue", "./sourceFiles.ts", "./index.ts"],
+    "dependencies": ["@vooya/vue = 0.1.0-alpha.10", "bevy_ecs = 0.18.1 (default-features = false, features = [std])", "vooya = coordinated workspace runtime"]
+  },
+  "proof": {
+    "hostOwns": ["playback timing and accessible controls", "DOM world projection and entity inspector", "responsive product layout"],
+    "rustOwns": ["Bevy World and Schedule", "entity and component storage", "movement, boundary, energy, and pulse systems", "spawn, despawn, selection validity, and snapshots"],
+    "gpuRelationship": "complement",
+    "boundary": {
+      "inputs": ["coarse Store actions with primitive arguments"],
+      "outputs": ["one cached structured world snapshot with at most 48 agents"],
+      "updatePattern": "One bounded ECS step runs every 120ms while active and publishes one coalesced snapshot."
+    },
+    "reusedCrates": ["bevy_ecs 0.18.1"],
+    "vooyaContracts": ["Cargo dependency features", "Rust Store build", "Vue Store adapter", "nested snapshot conversion", "subscription and disposal"],
+    "alternatives": ["plain Vue array and timer", "demo-only custom ECS", "handwritten wasm-bindgen Bevy bridge"]
+  }
+}

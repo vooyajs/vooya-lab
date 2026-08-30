@@ -23,16 +23,32 @@ const mainElement = ref<HTMLElement>();
 
 const sectionLabels: Record<LibrarySection, string> = { all: "ALL", data: "DAT", graphics: "GFX", tools: "DEV" };
 
+const categoryGroups: Record<string, string> = {
+  data: "Data systems",
+  state: "State & rules",
+  simulation: "Simulation & games",
+  examples: "Foundations",
+  tools: "Developer tools",
+  geometry: "Geometry systems",
+};
+
+function directorySection(category: string, haystack: string): Exclude<LibrarySection, "all"> {
+  if (category === "simulation" || category === "geometry") return "graphics";
+  if (category === "tools") return "tools";
+  if (category === "data" || category === "state") return "data";
+  return /canvas|graphic|image|mesh|geometry|spatial/.test(haystack) ? "graphics" : "data";
+}
+
 const implementedItems = registeredCases
   .filter((entry) => entry.manifest.portfolioClass !== "experiment")
   .map<DirectoryItem>((entry) => {
     const haystack = [entry.manifest.title, entry.manifest.summary, ...entry.manifest.tags].join(" ").toLowerCase();
-    const section = /canvas|graphic|image|mesh|geometry|spatial/.test(haystack) ? "graphics" : "data";
+    const section = directorySection(entry.manifest.category, haystack);
     return {
       title: entry.manifest.title,
       route: entry.loadPage ? entry.route : undefined,
       section,
-      group: entry.manifest.portfolioClass === "flagship" ? "Flagships" : "Foundations",
+      group: entry.manifest.portfolioClass === "flagship" ? "Flagships" : (categoryGroups[entry.manifest.category] ?? "Foundations"),
       badge: entry.manifest.status === "live" ? "LIVE" : entry.manifest.status.toUpperCase(),
       search: haystack,
     };

@@ -30,6 +30,7 @@ test("case directory filters, collapses, and expands without replacing the page"
 test("the shell keeps window fixed while content and active navigation scroll independently", async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 420 });
   await page.goto("/#/cases/examples/scatter-plot");
+  await expect(page.getByRole("heading", { name: /R-tree scatter/ })).toBeVisible();
 
   const main = page.locator(".lab-main");
   const directoryGroups = page.locator(".directory-groups");
@@ -233,6 +234,53 @@ test("Workflow Replay keeps domain rules and deterministic history in a Rust Sto
   await expect(preview.getByRole("heading", { name: "Draft" })).toBeVisible();
   await expect(preview.getByText("Store created at Draft")).toBeVisible();
   await expect(preview.getByText("SEALED", { exact: true }).first()).toBeVisible();
+});
+
+test("Bevy World Inspector runs a real bounded ECS schedule behind the Vue host", async ({ page }) => {
+  await page.goto("/#/cases/simulation/bevy-world-inspector");
+  const preview = page.getByRole("region", { name: "Interactive Bevy ECS world inspector" });
+  await expect(page.getByRole("heading", { name: /Bevy World Inspector/ })).toBeVisible();
+  await expect(preview.getByText("SCHEDULE RUNNING")).toBeVisible();
+  await expect(preview.getByText("24/48", { exact: true })).toBeVisible();
+  await expect(preview.getByRole("button", { name: /Agent 1,/ })).toBeVisible();
+
+  const tickMetric = preview.locator(".bevy-metrics strong").nth(0);
+  const initialTick = Number(await tickMetric.innerText());
+  await expect.poll(async () => Number(await tickMetric.innerText())).toBeGreaterThan(initialTick);
+
+  await preview.getByRole("button", { name: "Ⅱ PAUSE" }).click();
+  await expect(preview.getByText("SCHEDULE PAUSED")).toBeVisible();
+  await page.waitForTimeout(180);
+  const pausedTick = await tickMetric.innerText();
+  await page.waitForTimeout(300);
+  await expect(tickMetric).toHaveText(pausedTick);
+
+  await preview.getByRole("button", { name: "STEP +1" }).click();
+  await expect(tickMetric).toHaveText(String(Number(pausedTick) + 1).padStart(5, "0"));
+
+  await preview.getByRole("button", { name: /Agent 2,/ }).click();
+  await expect(preview.getByRole("heading", { name: /AGENT 02/ })).toBeVisible();
+  await preview.getByRole("button", { name: "+ SPAWN" }).click();
+  await expect(preview.getByText("25/48", { exact: true })).toBeVisible();
+  await expect(preview.getByRole("heading", { name: /AGENT 25/ })).toBeVisible();
+  await preview.getByRole("button", { name: "− DESPAWN" }).click();
+  await expect(preview.getByText("24/48", { exact: true })).toBeVisible();
+
+  const spawn = preview.getByRole("button", { name: "+ SPAWN" });
+  for (let count = 25; count <= 48; count += 1) {
+    await spawn.click();
+  }
+  await expect(preview.getByText("48/48", { exact: true })).toBeVisible();
+  await expect(spawn).toBeDisabled();
+  await preview.getByRole("button", { name: "RESET WORLD" }).click();
+  await expect(preview.getByText("24/48", { exact: true })).toBeVisible();
+
+  const previewPane = page.getByRole("region", { name: "Preview pane" });
+  const previewHeight = await previewPane.evaluate((element) => element.getBoundingClientRect().height);
+  await page.getByRole("button", { name: "SOURCE", exact: true }).click();
+  await expect(page.getByText("PRECOMPILED · SOURCE LOCKED")).toBeVisible();
+  await page.getByRole("button", { name: "PREVIEW", exact: true }).click();
+  await expect.poll(() => previewPane.evaluate((element) => element.getBoundingClientRect().height)).toBe(previewHeight);
 });
 
 test("Rspack case mounts its Vooya Rust summary", async ({ page }) => {

@@ -14,3 +14,6 @@ pub mod log_atlas;
 
 #[path = "state/workflow-replay/src/WorkflowReplay.rs"]
 pub mod workflow_replay;
+
+#[path = "simulation/bevy-world-inspector/src/BevyWorld.rs"]
+pub mod bevy_world;
