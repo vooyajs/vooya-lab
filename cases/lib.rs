@@ -11,3 +11,6 @@ pub mod scatter_plot;
 
 #[path = "data/log-atlas/src/LogAtlas.rs"]
 pub mod log_atlas;
+
+#[path = "state/workflow-replay/src/WorkflowReplay.rs"]
+pub mod workflow_replay;

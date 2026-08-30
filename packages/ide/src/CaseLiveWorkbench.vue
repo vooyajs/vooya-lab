@@ -16,16 +16,19 @@ withDefaults(defineProps<{
 });
 
 const view = ref<WorkbenchView>("split");
+const workbenchElement = ref<HTMLElement>();
+const compact = ref(false);
 const userSelectedView = ref(false);
-let compactQuery: MediaQueryList | undefined;
+let resizeObserver: ResizeObserver | undefined;
 
 function selectView(nextView: WorkbenchView) {
   userSelectedView.value = true;
   view.value = nextView;
 }
 
-function syncDefaultView(event: MediaQueryListEvent | MediaQueryList) {
-  if (!userSelectedView.value) view.value = event.matches ? "preview" : "split";
+function syncAvailableWidth(width: number) {
+  compact.value = width <= 1120;
+  if (!userSelectedView.value) view.value = compact.value ? "preview" : "split";
 }
 
 function showPreview() {
@@ -41,22 +44,24 @@ function showSplit() {
 }
 
 function revealPreview() {
-  if (compactQuery?.matches) view.value = "preview";
+  if (compact.value) view.value = "preview";
 }
 
 onMounted(() => {
-  compactQuery = window.matchMedia("(max-width: 1100px)");
-  syncDefaultView(compactQuery);
-  compactQuery.addEventListener("change", syncDefaultView);
+  const element = workbenchElement.value;
+  if (!element) return;
+  syncAvailableWidth(element.getBoundingClientRect().width);
+  resizeObserver = new ResizeObserver(([entry]) => syncAvailableWidth(entry.contentRect.width));
+  resizeObserver.observe(element);
 });
 
-onBeforeUnmount(() => compactQuery?.removeEventListener("change", syncDefaultView));
+onBeforeUnmount(() => resizeObserver?.disconnect());
 
 defineExpose({ showPreview, showSource, showSplit, revealPreview });
 </script>
 
 <template>
-  <section class="case-live-workbench" :data-view="view">
+  <section ref="workbenchElement" class="case-live-workbench" :data-view="view" :data-compact="compact">
     <header class="case-live-toolbar">
       <div class="case-live-identity">
         <span>LIVE WORKBENCH</span>

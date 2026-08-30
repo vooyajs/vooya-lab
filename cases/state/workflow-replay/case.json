@@ -1,0 +1,38 @@
+{
+  "$schema": "../../case.schema.json",
+  "category": "state",
+  "slug": "workflow-replay",
+  "title": "Workflow Replay",
+  "summary": "Keep approval invariants, audit events, rewind, and deterministic replay inside an instance-scoped Rust Store while Vue renders the complete product interface.",
+  "tags": ["state-machine", "audit-log", "deterministic-replay", "Vue", "Rust Store"],
+  "status": "experimental",
+  "portfolioClass": "foundation",
+  "question": "Can a Vooya Rust Store own non-trivial domain rules and replay while Vue remains the only renderer and consumes one structured snapshot per action?",
+  "spec": "./SPEC.md",
+  "vooyaComponent": "./src/WorkflowReplay.rs",
+  "host": "./DemoPage.vue",
+  "interactions": ["advance the workflow", "rewind one event", "replay to a selected cursor", "attempt an invalid transition", "reset the Store"],
+  "evidence": ["Rust-file Store compiles in the Lab Vooya entry", "Vue renders a cached structured snapshot", "actions update one instance-scoped audit log", "focused browser test covers rewind, replay, invalid, and reset"],
+  "execution": {
+    "mode": "precompiled",
+    "editable": false
+  },
+  "distribution": {
+    "mode": "demo-only",
+    "files": ["./src/WorkflowReplay.rs", "./src/WorkflowReplay.css", "./DemoPage.vue", "./sourceFiles.ts", "./index.ts"],
+    "dependencies": ["@vooya/vue = 0.1.0-alpha.10", "vooya = coordinated workspace runtime"]
+  },
+  "proof": {
+    "hostOwns": ["accessible workflow controls", "timeline and ledger DOM", "responsive product layout"],
+    "rustOwns": ["transition invariants", "append-only audit events", "rewind and deterministic replay", "cached structured snapshot"],
+    "gpuRelationship": "not-applicable",
+    "boundary": {
+      "inputs": ["coarse imperative actions with primitive arguments"],
+      "outputs": ["one cached structured workflow snapshot"],
+      "updatePattern": "One user action enters Rust; one coalesced snapshot notification returns to the Vue host."
+    },
+    "reusedCrates": [],
+    "vooyaContracts": ["Rust Store build", "Vue Store adapter", "generated Store actions", "snapshot subscription", "instance disposal"],
+    "alternatives": ["plain TypeScript reducer", "Pinia or Zustand with rewritten rules", "handwritten wasm-bindgen Store bridge"]
+  }
+}

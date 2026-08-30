@@ -764,14 +764,12 @@ body { background: var(--lab-page); }
 .case-live-source .vooya-workbench > .vooya-ide { flex: 1; min-height: 0; height: auto; border: 0; }
 .case-live-source .vooya-workbench-output { flex: none; }
 
-@media (max-width: 1100px) {
-  .case-live-toolbar { align-items: flex-start; flex-direction: column; }
-  .case-live-actions { width: 100%; justify-content: space-between; }
-  .case-live-view-switch button:first-child { display: none; }
-  .case-live-grid { grid-template-columns: 1fr; height: 660px; }
-  .case-live-workbench[data-view="split"] .case-live-source { display: none; }
-  .case-live-pane + .case-live-pane { border-left: 0; }
-}
+.case-live-workbench[data-compact="true"] .case-live-toolbar { align-items: flex-start; flex-direction: column; }
+.case-live-workbench[data-compact="true"] .case-live-actions { width: 100%; justify-content: space-between; }
+.case-live-workbench[data-compact="true"] .case-live-view-switch button:first-child { display: none; }
+.case-live-workbench[data-compact="true"] .case-live-grid { grid-template-columns: 1fr; height: 660px; }
+.case-live-workbench[data-compact="true"][data-view="split"] .case-live-source { display: none; }
+.case-live-workbench[data-compact="true"] .case-live-pane + .case-live-pane { border-left: 0; }
 
 @media (max-width: 620px) {
   .case-live-identity { grid-template-columns: 1fr; }

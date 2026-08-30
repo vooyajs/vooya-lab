@@ -490,6 +490,12 @@ security boundaries.
 
 ## Development workflow
 
+Adding a new Rust source module or Store to `cases/lib.rs` requires a full Vite
+development-server restart before interactive verification. In the current
+alpha toolchain, host and manifest files can hot-update independently while the
+already-built WASM entry still exposes the previous export set. Always pair
+the restarted development check with a clean production build.
+
 ### Adding or changing a case
 
 1. State the user-visible outcome and the product question the case answers.

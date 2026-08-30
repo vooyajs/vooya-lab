@@ -74,6 +74,7 @@ test("Gallery exposes the capability-labelled compiler alpha without promoting b
 
   await page.goto("/#/experiments/browser-compiler");
   await expect(page.getByRole("heading", { name: /Rustc.*inside the browser/ })).toBeVisible();
+  await page.getByRole("button", { name: "SOURCE", exact: true }).click();
   await expect(page.getByRole("button", { name: "Compile & run Rust" })).toBeEnabled();
   await expect(page.getByText("Vooya Gate 2 remains open")).toBeVisible();
   await page.getByRole("button", { name: /Unknown target/ }).click();
@@ -120,6 +121,7 @@ test("generated scatter route compares implementations and exposes a gated workb
   await expect(page.getByText("Rust R-tree", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Compile & preview" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: /Try Browser Compiler/ })).toBeVisible();
+  await page.getByRole("button", { name: "SOURCE", exact: true }).click();
   await expect(page.getByText("PRECOMPILED · SOURCE LOCKED")).toBeVisible();
   const explorer = page.getByRole("complementary", { name: "Files" });
   await expect(explorer).toBeVisible();
@@ -199,7 +201,38 @@ test("Log Atlas keeps trace querying in the Vooya Rust component", async ({ page
   await page.getByRole("button", { name: "RESET", exact: true }).click();
   await expect(engine.getByText("Query rejected by Rust regex")).toHaveCount(0);
   await expect(page.getByRole("group", { name: "Trace query presets" }).getByRole("button", { name: "ALL", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "SOURCE", exact: true }).click();
   await expect(page.getByText("PRECOMPILED · SOURCE LOCKED")).toBeVisible();
+});
+
+test("Workflow Replay keeps domain rules and deterministic history in a Rust Store", async ({ page }) => {
+  await page.goto("/#/cases/state/workflow-replay");
+  const preview = page.getByRole("region", { name: "Interactive approval workflow replay" });
+  await expect(page.getByRole("heading", { name: "Workflow Replay" })).toBeVisible();
+  await expect(preview.getByRole("heading", { name: "Draft" })).toBeVisible();
+  const previewHeight = await preview.evaluate((element) => element.getBoundingClientRect().height);
+
+  await preview.getByRole("button", { name: "ADVANCE →" }).click();
+  await expect(preview.getByRole("heading", { name: "Review" })).toBeVisible();
+  await expect(preview.getByText("Accepted: Draft → Review")).toBeVisible();
+  await expect.poll(() => preview.evaluate((element) => element.getBoundingClientRect().height)).toBe(previewHeight);
+
+  await preview.getByRole("button", { name: "TRY INVALID" }).click();
+  await expect(preview.locator(".workflow-state-card dd").nth(1)).toHaveText("01");
+  await expect(preview.getByText(/Rejected: Review cannot skip/)).toBeVisible();
+
+  await preview.getByRole("button", { name: "ADVANCE →" }).click();
+  await preview.getByRole("button", { name: "ADVANCE →" }).click();
+  await expect(preview.getByRole("heading", { name: "Scheduled" })).toBeVisible();
+  await preview.getByLabel("Replay target event").fill("1");
+  await preview.getByRole("button", { name: "REPLAY", exact: true }).click();
+  await expect(preview.getByRole("heading", { name: "Review" })).toBeVisible();
+  await expect(preview.getByText("Replayed event 02: Review")).toBeVisible();
+
+  await preview.getByRole("button", { name: "RESET INSTANCE" }).click();
+  await expect(preview.getByRole("heading", { name: "Draft" })).toBeVisible();
+  await expect(preview.getByText("Store created at Draft")).toBeVisible();
+  await expect(preview.getByText("SEALED", { exact: true }).first()).toBeVisible();
 });
 
 test("Rspack case mounts its Vooya Rust summary", async ({ page }) => {

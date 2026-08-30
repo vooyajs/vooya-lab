@@ -114,6 +114,12 @@ convenience.
 4. Update machine-readable metadata, evidence, and focused tests together.
 5. Keep migrations deployable and reversible after each change.
 
+When a case adds a new Rust module or Store export to `cases/lib.rs`, restart
+the Vite development server before browser verification. The current alpha
+pipeline rebuilds the authored WASM entry at server start; Vue/manifest HMR may
+otherwise expose the new route while the running WASM module still lacks its
+exports. A production build remains the authoritative clean-entry check.
+
 Use the repository package manager and existing scripts:
 
 ```sh

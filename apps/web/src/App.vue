@@ -38,12 +38,12 @@ const implementedItems = registeredCases
     };
   });
 
-const plannedItems: DirectoryItem[] = [
+const plannedItems: DirectoryItem[] = ([
   { title: "Workflow Replay", section: "data", group: "State & rules", badge: "STATE", search: "workflow replay state rules event sourcing" },
   { title: "Mesh Clinic", section: "graphics", group: "Geometry systems", badge: "CPU+GPU", search: "mesh clinic geometry repair webgpu" },
   { title: "Vector Tile Forge", section: "graphics", group: "Geometry systems", badge: "CPU+GPU", search: "vector tile forge map geometry webgpu" },
   { title: "Source Surgeon", section: "tools", group: "Developer tools", badge: "DEV", search: "source surgeon parser ast developer tools" },
-];
+] satisfies DirectoryItem[]).filter((planned) => !implementedItems.some((item) => item.title === planned.title));
 
 const visibleGroups = computed(() => {
   const needle = query.value.trim().toLowerCase();
