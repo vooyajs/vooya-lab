@@ -124,7 +124,13 @@ async function compile() {
     profile: "release",
   });
   requestId.value = request.requestId;
-  stage.value = "queued";
+  handleEvent({
+    type: "state",
+    requestId: request.requestId,
+    compilerVersion: props.runner.version,
+    stage: "queued",
+    message: "Virtual workspace queued for the browser compiler",
+  });
   try {
     const artifact = await props.runner.compile(request, handleEvent);
     if (artifact) emit("artifact", artifact);

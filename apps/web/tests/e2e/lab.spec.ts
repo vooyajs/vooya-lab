@@ -75,8 +75,29 @@ test("Gallery exposes the capability-labelled compiler alpha without promoting b
 
   await page.goto("/#/experiments/browser-compiler");
   await expect(page.getByRole("heading", { name: /Rustc.*inside the browser/ })).toBeVisible();
+  const previewPane = page.getByRole("region", { name: "Preview pane" });
+  const previewStage = page.locator(".compiler-preview-stage");
+  const previewHeight = await previewStage.evaluate((element) => element.getBoundingClientRect().height);
   await page.getByRole("button", { name: "SOURCE", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Compile & run Rust" })).toBeEnabled();
+  const compilerSource = page.locator('.vooya-ide[data-readonly="false"] .cm-content');
+  await compilerSource.click();
+  await page.keyboard.press("Control+End");
+  await page.keyboard.type("\n// edited in the browser");
+  await expect(compilerSource).toContainText("edited in the browser");
+  await expect(previewPane).toBeHidden();
+  await page.getByRole("button", { name: "Compile & run Rust" }).click();
+  await expect(previewPane).toBeVisible();
+  const previewLoading = page.getByRole("status", { name: "Browser build in progress" });
+  await expect(previewLoading).toBeVisible();
+  await expect(page.locator(".compiler-preview-stage")).toHaveAttribute("aria-busy", "true");
+  await expect.poll(() => previewStage.evaluate((element) => element.getBoundingClientRect().height)).toBe(previewHeight);
+  await expect(previewLoading.getByText(/LOCAL PIPELINE/)).toBeVisible();
+  const cancelBuild = previewLoading.getByRole("button", { name: "Cancel build" });
+  await expect(cancelBuild).toBeFocused();
+  await cancelBuild.click();
+  await expect(previewLoading).toHaveCount(0);
+  await expect(page.locator(".compiler-preview-stage")).toHaveAttribute("aria-busy", "false");
+  await page.getByRole("button", { name: "SOURCE", exact: true }).click();
   await expect(page.getByText("Vooya Gate 2 remains open")).toBeVisible();
   await page.getByRole("button", { name: /Unknown target/ }).click();
   await expect(page.getByRole("treeitem", { name: "no-core.rs" })).toBeVisible();
@@ -99,7 +120,18 @@ test("isolated preview host mounts, replaces, and disposes a real Vooya artifact
   const secondFrame = page.locator('iframe[title="Vooya artifact preview"]');
   await expect(secondFrame).toHaveCount(1);
   await expect.poll(() => secondFrame.getAttribute("name")).not.toBe(firstRealm);
+  const secondRealm = await secondFrame.getAttribute("name");
   await expect(secondFrame.contentFrame().getByText("Vooya Rust summary")).toBeVisible();
+
+  await page.getByRole("button", { name: "SOURCE", exact: true }).click();
+  await page.getByRole("button", { name: "Compile & run Rust" }).click();
+  const previewLoading = page.getByRole("status", { name: "Browser build in progress" });
+  await expect(previewLoading).toBeVisible();
+  await expect(page.locator('iframe[title="Vooya artifact preview"]')).toHaveAttribute("name", secondRealm ?? "");
+  await expect(previewLoading).toContainText("Previous successful result remains active");
+  await previewLoading.getByRole("button", { name: "Cancel build" }).click();
+  await expect(previewLoading).toHaveCount(0);
+  await expect(page.locator('iframe[title="Vooya artifact preview"]')).toHaveAttribute("name", secondRealm ?? "");
 
   await page.getByRole("button", { name: "Dispose realm" }).click();
   await expect(page.locator('iframe[title="Vooya artifact preview"]')).toHaveCount(0);

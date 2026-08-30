@@ -58,6 +58,13 @@ visible beside the source. The last successful preview remains mounted while a
 new request prepares/compiles and is replaced only after the new artifact is
 ready; failed builds retain the prior result and show diagnostics.
 
+Starting a build reveals Preview on compact Workbench layouts and presents an
+accessible loading layer for the complete local pipeline: queue, toolchain
+preparation, compilation, linking, emission, binding, execution, and mount. The
+loading layer must preserve the previous successful realm behind it, expose
+cancellation, keep the work surface height stable, and clear on success,
+failure, or cancellation. Wide split layouts remain split.
+
 ## Protocol-first packages
 
 The target package boundaries are hypotheses to validate:

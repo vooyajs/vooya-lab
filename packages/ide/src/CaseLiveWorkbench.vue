@@ -44,7 +44,9 @@ function showSplit() {
 }
 
 function revealPreview() {
-  if (compact.value) view.value = "preview";
+  if (!compact.value) return false;
+  view.value = "preview";
+  return true;
 }
 
 onMounted(() => {

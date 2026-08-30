@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref } from "vue";
 import { BrowserBindgenRunner, type BrowserBindgenResult } from "@vooya-lab/bindgen-browser";
 import type { ArtifactManifest, CompileRequest, CompilerEvent } from "@vooya-lab/compiler-protocol";
 import { BrowserRustcGateOneRunner, probeBrowserCompilerEnvironment, WEBLINGS_DEMO_ASSETS, WEBLINGS_GATE_1_CANDIDATE } from "@vooya-lab/compiler-browser";
@@ -45,7 +45,8 @@ const artifact = ref<ArtifactManifest>();
 const lastEvent = ref<CompilerEvent>();
 const lastElapsedMs = ref<number>();
 const previewElement = ref<HTMLElement>();
-const liveWorkbench = ref<{ revealPreview: () => void }>();
+const cancelBuildButton = ref<HTMLButtonElement>();
+const liveWorkbench = ref<{ revealPreview: () => boolean }>();
 const previewStage = ref<PreviewStage>("idle");
 const previewMessage = ref("No component realm has been created.");
 const executionStage = ref<"idle" | "running" | "succeeded" | "failed">("idle");
@@ -54,6 +55,8 @@ const executionMessage = ref("Compile the edited Rust command to execute its emi
 const bindingStage = ref<"idle" | "running" | "succeeded" | "failed">("idle");
 const bindingMessage = ref("No browser-side binding transformation has run.");
 const bindingResult = ref<BrowserBindgenResult>();
+const hasSuccessfulPreview = ref(false);
+type PreviewBusyStage = "" | "queued" | "preparing" | "compiling" | "linking" | "emitting" | "binding" | "executing" | "mounting";
 let previewHost: IsolatedVooyaPreviewHost<Record<string, unknown>> | undefined;
 let previewContainer: HTMLElement | undefined;
 let executionGeneration = 0;
@@ -65,6 +68,34 @@ const buildStatusLabel = computed(() => {
   if (executionStage.value === "succeeded") return "READY · browser artifact executed";
   if (executionStage.value === "failed") return "ERROR · previous preview preserved";
   return "IDLE · press Compile & run Rust";
+});
+const previewBusyStage = computed<PreviewBusyStage>(() => {
+  if (bindingStage.value === "running") return "binding";
+  if (executionStage.value === "running") return previewStage.value === "loading" ? "mounting" : "executing";
+  if (lastEvent.value?.type === "state") {
+    const stage = lastEvent.value.stage;
+    if (stage === "queued" || stage === "preparing" || stage === "compiling" || stage === "linking" || stage === "emitting") return stage;
+  }
+  if (lastEvent.value?.type === "complete" && lastEvent.value.stage === "succeeded" && !artifact.value) return "emitting";
+  return "";
+});
+const previewBusy = computed(() => Boolean(previewBusyStage.value));
+const previewBusyTitles: Record<Exclude<PreviewBusyStage, "">, string> = {
+  queued: "Build request queued",
+  preparing: "Preparing the local toolchain",
+  compiling: "Compiling Rust in your browser",
+  linking: "Linking the WebAssembly artifact",
+  emitting: "Validating the emitted artifact",
+  binding: "Generating browser bindings",
+  executing: "Executing the new artifact",
+  mounting: "Mounting the new preview",
+};
+const previewBusyTitle = computed(() => previewBusyStage.value ? previewBusyTitles[previewBusyStage.value] : "Browser build in progress");
+const previewBusyMessage = computed(() => {
+  if (bindingStage.value === "running") return bindingMessage.value;
+  if (executionStage.value === "running") return previewStage.value === "loading" ? previewMessage.value : executionMessage.value;
+  if (lastEvent.value?.type === "state") return lastEvent.value.message ?? "The dedicated compiler Worker is active.";
+  return "The emitted artifact is moving to the preview pipeline.";
 });
 const wasiFiles: IdeFile[] = [{
   path: "gate-one/main.rs",
@@ -151,6 +182,9 @@ onBeforeUnmount(() => {
 
 function handleCompilerEvent(event: CompilerEvent) {
   lastEvent.value = event;
+  if (event.type === "state" && event.stage === "queued" && liveWorkbench.value?.revealPreview()) {
+    void nextTick(() => cancelBuildButton.value?.focus({ preventScroll: true }));
+  }
   if (event.type === "state" && event.stage === "preparing") {
     artifact.value = undefined;
     executionGeneration += 1;
@@ -301,6 +335,7 @@ async function selectTarget(target: CompileRequest["target"]) {
     previewContainer = undefined;
     previewStage.value = "idle";
     previewMessage.value = "No component realm has been created.";
+    hasSuccessfulPreview.value = false;
   }
   compilerTarget.value = target;
 }
@@ -330,6 +365,7 @@ async function swapPreview(bundle: VooyaArtifactBundle<Record<string, unknown>>)
     if (previousContainer) previousContainer.hidden = true;
     await previousHost?.dispose();
     previousContainer?.remove();
+    hasSuccessfulPreview.value = true;
   } catch (cause) {
     await candidate.dispose();
     nextContainer.remove();
@@ -406,6 +442,24 @@ async function disposePreview() {
   previewContainer?.remove();
   previewHost = undefined;
   previewContainer = undefined;
+  hasSuccessfulPreview.value = false;
+}
+
+function cancelPipeline() {
+  executionGeneration += 1;
+  if (lastEvent.value?.requestId) runner.cancel(lastEvent.value.requestId);
+  moduleRunner.cancel();
+  generatedGlueRunner.cancel();
+  wasiRunner.cancel();
+  bindgenRunner?.cancel();
+  if (bindingStage.value === "running") {
+    bindingStage.value = "idle";
+    bindingMessage.value = "Binding cancelled; the previous successful preview was preserved.";
+  }
+  if (executionStage.value === "running") {
+    executionStage.value = "idle";
+    executionMessage.value = "Execution cancelled; the previous successful preview was preserved.";
+  }
 }
 </script>
 
@@ -445,18 +499,35 @@ async function disposePreview() {
       <template #preview>
         <section class="compiler-preview-gate">
           <header>
-            <div><span>PREVIEW HOST · ISOLATED REALM</span><h2>{{ previewStage === 'mounted' ? 'Current successful result' : 'Your browser-built result appears here' }}</h2></div>
+            <div><span>PREVIEW HOST · ISOLATED REALM</span><h2>{{ hasSuccessfulPreview ? 'Current successful result' : 'Your browser-built result appears here' }}</h2></div>
             <code :data-stage="previewStage">{{ previewStage }}</code>
           </header>
           <p v-if="gateTwoDomConfigured">For the controlled unknown-target template, this frame mounts the JavaScript glue and WASM emitted by the current browser request. While a new build runs, the last successful realm remains visible and is replaced only after the new artifact is ready.</p>
           <p v-else>The WASI path executes the actual artifact locally. The visible component presenter is repository-built and is labelled as such; this page does not claim that Gate 1 compiled an arbitrary Vooya UI.</p>
           <div class="compiler-preview-actions">
-            <button v-if="!gateTwoDomConfigured" type="button" @click="mountPrecompiledProof()">Mount precompiled presenter</button>
-            <button type="button" :disabled="previewStage !== 'mounted'" @click="resetPreview">Reset realm</button>
-            <button type="button" :disabled="previewStage === 'idle' || previewStage === 'disposed'" @click="disposePreview">Dispose realm</button>
+            <button v-if="!gateTwoDomConfigured" type="button" :disabled="previewBusy" @click="mountPrecompiledProof()">Mount precompiled presenter</button>
+            <button type="button" :disabled="previewBusy || previewStage !== 'mounted'" @click="resetPreview">Reset realm</button>
+            <button type="button" :disabled="previewBusy || previewStage === 'idle' || previewStage === 'disposed'" @click="disposePreview">Dispose realm</button>
             <small>{{ previewMessage }}</small>
           </div>
-          <div ref="previewElement" class="compiler-preview-surface" :data-stage="previewStage"></div>
+          <div class="compiler-preview-stage" :aria-busy="previewBusy">
+            <div ref="previewElement" class="compiler-preview-surface" :data-stage="previewStage"></div>
+            <div v-if="previewBusy" class="compiler-preview-loading" role="status" aria-live="polite" aria-label="Browser build in progress">
+              <div class="compiler-preview-loading-panel">
+                <div class="compiler-preview-loading-orbit" aria-hidden="true"><i></i><i></i></div>
+                <div class="compiler-preview-loading-copy">
+                  <span>LOCAL PIPELINE · {{ previewBusyStage.toUpperCase() }}</span>
+                  <strong>{{ previewBusyTitle }}</strong>
+                  <p>{{ previewBusyMessage }}</p>
+                </div>
+                <div class="compiler-preview-loading-track" aria-hidden="true"><i v-for="index in 7" :key="index"></i></div>
+                <footer>
+                  <span>{{ hasSuccessfulPreview ? 'Previous successful result remains active behind this build.' : 'The first successful result will mount here.' }}</span>
+                  <button ref="cancelBuildButton" type="button" @click="cancelPipeline">Cancel build</button>
+                </footer>
+              </div>
+            </div>
+          </div>
           <footer><span>Sandbox: scripts only</span><span>Network: blocked by CSP</span><span>Swap: after success</span></footer>
         </section>
       </template>
