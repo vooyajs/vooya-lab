@@ -8,6 +8,7 @@
     "paths": {
       "vue": ["./node_modules/vue"],
       "vue-router": ["./node_modules/vue-router"],
+      "@vooya/vue": ["./node_modules/@vooya/vue/dist/index.d.ts"],
       "@vooya-lab/bindgen-browser": ["../../packages/bindgen-browser/src/index.ts"],
       "@vooya-lab/ide": ["../../packages/ide/src/index.ts"],
       "@vooya-lab/case-schema": ["../../packages/case-schema/src/index.ts"],
@@ -30,5 +31,5 @@
     "rootDirs": ["../..", "../../.vooya/types"],
     "types": ["vite/client"]
   },
-  "include": ["src/**/*.ts", "src/**/*.vue", "src/**/*.d.ts", "../../cases/examples/**/*.ts", "../../cases/examples/**/*.vue", "../../packages/bindgen-browser/src/**/*.ts", "../../packages/case-schema/src/**/*.ts", "../../packages/compiler-protocol/src/**/*.ts", "../../packages/compiler-browser/src/**/*.ts", "../../packages/preview-host/src/**/*.ts", "../../packages/runtime-module/src/**/*.ts", "../../packages/runtime-wasi/src/**/*.ts", "../../.vooya/types/**/*.ts"]
+  "include": ["src/**/*.ts", "src/**/*.vue", "src/**/*.d.ts", "../../cases/examples/**/*.ts", "../../cases/examples/**/*.vue", "../../cases/state/workflow-replay/**/*.ts", "../../cases/state/workflow-replay/**/*.vue", "../../packages/bindgen-browser/src/**/*.ts", "../../packages/case-schema/src/**/*.ts", "../../packages/compiler-protocol/src/**/*.ts", "../../packages/compiler-browser/src/**/*.ts", "../../packages/preview-host/src/**/*.ts", "../../packages/runtime-module/src/**/*.ts", "../../packages/runtime-wasi/src/**/*.ts", "../../.vooya/types/**/*.ts"]
 }
