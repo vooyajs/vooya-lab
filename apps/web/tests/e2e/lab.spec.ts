@@ -308,6 +308,8 @@ test("Log Atlas keeps trace querying in the Vooya Rust component", async ({ page
 });
 
 test("Workflow Replay keeps domain rules and deterministic history in a Rust Store", async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
   await page.goto("/#/cases/state/workflow-replay");
   const preview = page.getByRole("region", { name: "Interactive approval workflow replay" });
   await expect(page.getByRole("heading", { name: "Workflow Replay" })).toBeVisible();
@@ -326,6 +328,9 @@ test("Workflow Replay keeps domain rules and deterministic history in a Rust Sto
   await preview.getByRole("button", { name: "ADVANCE →" }).click();
   await preview.getByRole("button", { name: "ADVANCE →" }).click();
   await expect(preview.getByRole("heading", { name: "Scheduled" })).toBeVisible();
+  await preview.getByRole("button", { name: "← REWIND" }).click();
+  await expect(preview.getByRole("heading", { name: "Approved", exact: true })).toBeVisible();
+  await expect(preview.getByText("Rewound to Approved")).toBeVisible();
   await preview.getByLabel("Replay target event").fill("1");
   await preview.getByRole("button", { name: "REPLAY", exact: true }).click();
   await expect(preview.getByRole("heading", { name: "Review" })).toBeVisible();
@@ -335,6 +340,23 @@ test("Workflow Replay keeps domain rules and deterministic history in a Rust Sto
   await expect(preview.getByRole("heading", { name: "Draft" })).toBeVisible();
   await expect(preview.getByText("Store created at Draft")).toBeVisible();
   await expect(preview.getByText("SEALED", { exact: true }).first()).toBeVisible();
+
+  // Navigate within the same document: a full reload would hide leaked state.
+  await preview.getByRole("button", { name: "ADVANCE →" }).click();
+  await expect(preview.getByRole("heading", { name: "Review" })).toBeVisible();
+  await page.evaluate(() => { window.location.hash = "/"; });
+  await expect(preview).toHaveCount(0);
+  await page.evaluate(() => { window.location.hash = "/cases/state/workflow-replay"; });
+  await expect(preview.getByRole("heading", { name: "Draft" })).toBeVisible();
+  await expect(preview.locator(".workflow-state-card dd").nth(1)).toHaveText("00");
+  await expect(preview.getByText("Store created at Draft")).toBeVisible();
+  await preview.getByRole("button", { name: "ADVANCE →" }).click();
+  await expect(preview.getByRole("heading", { name: "Review" })).toBeVisible();
+
+  await page.getByRole("button", { name: "SOURCE", exact: true }).click();
+  await expect(page.getByText("PRECOMPILED · SOURCE LOCKED")).toBeVisible();
+  await expect(page.locator(".vooya-ide-editor-host .cm-content")).toContainText("pub struct WorkflowReplaySnapshot");
+  expect(pageErrors).toEqual([]);
 });
 
 test("Bevy World Inspector runs a real bounded ECS schedule behind the Vue host", async ({ page }) => {

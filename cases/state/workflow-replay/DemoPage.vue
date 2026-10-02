@@ -2,35 +2,18 @@
 import { computed, ref, watch } from "vue";
 import type { LabCaseManifest } from "@vooya-lab/case-schema";
 import { CaseLiveWorkbench, VooyaWorkbench } from "@vooya-lab/ide";
-import { useVooyaStore } from "@vooya/vue";
 import manifestData from "./case.json";
-import createWorkflowReplayStore from "./src/WorkflowReplay.rs";
+import { useWorkflowReplay, type WorkflowReplaySnapshot } from "./src/WorkflowReplay.rs";
 import { sourceFiles } from "./sourceFiles";
 import "./src/WorkflowReplay.css";
-
-type WorkflowSnapshot = {
-  stage: string;
-  stage_index: number;
-  cursor: number;
-  event_count: number;
-  violation_count: number;
-  can_advance: boolean;
-  can_rewind: boolean;
-  is_terminal: boolean;
-  integrity: string;
-  last_attempt: string;
-  history: string[];
-};
 
 const manifest = manifestData as LabCaseManifest;
 const stages = ["Draft", "Review", "Approved", "Scheduled", "Released"];
 const rustEntryPath = "cases/state/workflow-replay/src/WorkflowReplay.rs";
 const replayTarget = ref(0);
-const { snapshot: state, dispatch } = useVooyaStore(createWorkflowReplayStore(), {
-  disposeOnUnmount: true,
-});
+const { state, advance, rewind, attempt_invalid: attemptInvalid, replay_to, reset } = useWorkflowReplay();
 
-const initialSnapshot: WorkflowSnapshot = {
+const initialSnapshot: WorkflowReplaySnapshot = {
   stage: "Booting…",
   stage_index: 0,
   cursor: 0,
@@ -44,9 +27,7 @@ const initialSnapshot: WorkflowSnapshot = {
   history: ["01 · Loading snapshot"],
 };
 
-// Temporary narrowing owned by upstream vooyajs/vooya#105. The generated
-// action declarations are concrete today; the user-defined snapshot is not.
-const workflow = computed(() => (state.value as WorkflowSnapshot | undefined) ?? initialSnapshot);
+const workflow = computed(() => state.value ?? initialSnapshot);
 const ready = computed(() => state.value !== undefined);
 const replayMaximum = computed(() => Math.max(0, workflow.value.event_count - 1));
 
@@ -55,24 +36,12 @@ watch(() => workflow.value.cursor, (cursor) => {
 });
 
 function runReplay() {
-  dispatch("replay_to", replayTarget.value);
+  replay_to(replayTarget.value);
 }
 
 function resetWorkflow() {
-  dispatch("reset");
+  reset();
   replayTarget.value = 0;
-}
-
-function advance() {
-  dispatch("advance");
-}
-
-function rewind() {
-  dispatch("rewind");
-}
-
-function attemptInvalid() {
-  dispatch("attempt_invalid");
 }
 </script>
 

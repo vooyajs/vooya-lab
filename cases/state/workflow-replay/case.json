@@ -12,7 +12,7 @@
   "vooyaComponent": "./src/WorkflowReplay.rs",
   "host": "./DemoPage.vue",
   "interactions": ["advance the workflow", "rewind one event", "replay to a selected cursor", "attempt an invalid transition", "reset the Store"],
-  "evidence": ["Rust-file Store compiles in the Lab Vooya entry", "Vue renders a cached structured snapshot", "actions update one instance-scoped audit log", "focused browser test covers rewind, replay, invalid, and reset"],
+  "evidence": ["Rust-file Store compiles in the Lab Vooya entry", "Vue renders a cached structured snapshot", "actions update one instance-scoped audit log", "focused browser test covers rewind, replay, invalid, reset, and fresh route remount"],
   "execution": {
     "mode": "precompiled",
     "editable": false
@@ -20,7 +20,7 @@
   "distribution": {
     "mode": "demo-only",
     "files": ["./src/WorkflowReplay.rs", "./src/WorkflowReplay.css", "./DemoPage.vue", "./sourceFiles.ts", "./index.ts"],
-    "dependencies": ["@vooya/vue = 0.1.0-alpha.10", "vooya = coordinated workspace runtime"]
+    "dependencies": ["@vooya/vue = 0.1.0-beta.1", "@vooya/vite = 0.1.0-beta.2 (build)", "vooya = coordinated workspace runtime"]
   },
   "proof": {
     "hostOwns": ["accessible workflow controls", "timeline and ledger DOM", "responsive product layout"],
