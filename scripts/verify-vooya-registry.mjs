@@ -14,6 +14,27 @@ const expected = new Map([
   ["@vooya/compiler", "0.1.0-beta.0"], ["@vooya/core", "0.1.0-beta.0"],
 ]);
 const lock = readFileSync(join(root, "pnpm-lock.yaml"), "utf8");
+// pnpm lockfile v9 puts an applied package patch immediately after its version
+// in the snapshot ID. Peer dependency suffixes may mention other patched packages;
+// those do not mean this package itself was patched.
+function rejectVooyaPatches(contents, label) {
+  assert.match(contents, /^lockfileVersion: ['"]?9\.0['"]?$/m, `${label}: expected pnpm lockfile v9`);
+  const snapshots = contents.split(/^snapshots:\s*$/m)[1];
+  assert.ok(snapshots, `${label}: missing installed package snapshots`);
+  for (const line of snapshots.split("\n")) {
+    if (!/^  \S/.test(line)) continue;
+    const id = line.slice(2).replace(/^['"]/, "");
+    for (const [name, version] of expected) {
+      assert.ok(!id.startsWith(`${name}@${version}(patch_hash=`),
+        `${label}: ${name}@${version} has an applied pnpm patch; expected unchanged registry package`);
+    }
+  }
+}
+rejectVooyaPatches(lock, "pnpm-lock.yaml");
+// Also detect a stale patched installation when the checked-in lock was changed
+// without reinstalling. pnpm's default virtual store retains its resolved lock.
+const installedLock = join(nodeModules, ".pnpm/lock.yaml");
+if (existsSync(installedLock)) rejectVooyaPatches(readFileSync(installedLock, "utf8"), "installed pnpm lock");
 const checked = new Map();
 function inspect(name, from) {
   const req = createRequire(join(from, "package.json"));
