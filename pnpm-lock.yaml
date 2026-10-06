@@ -48,8 +48,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/runtime-wasi
       '@vooya/vue':
-        specifier: 0.1.0-beta.1
-        version: 0.1.0-beta.1(vue@3.5.41(typescript@5.9.3))
+        specifier: 0.2.0-alpha.0
+        version: 0.2.0-alpha.0(vue@3.5.41(typescript@5.9.3))
       path-browserify:
         specifier: 1.0.1
         version: 1.0.1
@@ -67,8 +67,8 @@ importers:
         specifier: 6.0.1
         version: 6.0.1(vite@8.2.1(esbuild@0.28.1))(vue@3.5.41(typescript@5.9.3))
       '@vooya/vite':
-        specifier: 0.1.0-beta.2
-        version: 0.1.0-beta.2(vite@8.2.1(esbuild@0.28.1))
+        specifier: 0.2.0-alpha.0
+        version: 0.2.0-alpha.0(vite@8.2.1(esbuild@0.28.1))
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -912,8 +912,8 @@ packages:
   '@volar/typescript@2.4.23':
     resolution: {integrity: sha512-lAB5zJghWxVPqfcStmAP1ZqQacMpe90UrP5RJ3arDyrhy4aCUQqmxPPLB2PWDKugvylmO41ljK7vZ+t6INMTag==}
 
-  '@vooya/build-core@0.1.0-beta.0':
-    resolution: {integrity: sha512-W76sCsA79IPsG+2mUjoic7LGvRCM4rMw8fpf89/5KD7qnQ1RQFpRDv0Ph1HdUlmFUqCyC0W9pFNEsjKLHAEg6g==}
+  '@vooya/build-core@0.2.0-alpha.0':
+    resolution: {integrity: sha512-2/NHZ080CuHPmFkjxfTa4ia1XYBox6/D+b+rocSG3SrZwLYT9E6HFF7LL8+ph0yailZP34ccuw/7qryv2Z9nVQ==}
 
   '@vooya/compiler@0.1.0-beta.0':
     resolution: {integrity: sha512-DPM2sAxRGYI3298E9l+l6iuzBEy7wFPJ2wJ9dxW/EyH00GLDKXzLZHKrSvoL/hbBaqXcDAZzlmJLDQLLhn+6jg==}
@@ -921,14 +921,17 @@ packages:
   '@vooya/core@0.1.0-beta.0':
     resolution: {integrity: sha512-pRz68YNxyWeZgVcHYWfBiFZOauYTwGgQ6/T/PIfY239hJfgVtUy/0+cqz+imNWnmLzMwJz64yJ08anrFQyHtMw==}
 
-  '@vooya/vite@0.1.0-beta.2':
-    resolution: {integrity: sha512-TdpLE1fKVj+cZFgQbNMKTtaIqMWlsaRBuqvftFTYTBkzKgrgFUSExLdEcnMijygqGBAChkL5jXKUiZOVZ4C8oA==}
+  '@vooya/provider-rust@0.2.0-alpha.0':
+    resolution: {integrity: sha512-pynrowrr4b+TiUMovd/u2nNCjZUMPSu8iNjHYDDip7cOlEajh/vZp0f/fm8yjoF4h570KZ98msRk05pb4twOuA==}
+
+  '@vooya/vite@0.2.0-alpha.0':
+    resolution: {integrity: sha512-DI+VNP2CjtNOjdN7/cdlHpYGHsOp3aixiFLPfCohb0ZBj87NT94xHQyDpXqHV7+JXODQgTNn+zh0KV7LFr+i+Q==}
     hasBin: true
     peerDependencies:
       vite: '>=7 <9'
 
-  '@vooya/vue@0.1.0-beta.1':
-    resolution: {integrity: sha512-oZpoTR9bpf0z+IDQO8329UZw2M1tshGqhMvRq8+uMSlwDMM0z1flthTez18FyTEvsf3pfRjSOvvsnJKPu3zkjQ==}
+  '@vooya/vue@0.2.0-alpha.0':
+    resolution: {integrity: sha512-TgMWLzUFmEEMLwtP7/MDjx+TTgy3qnstV+FLAhlUYeXF4vnJnnXAbleqiavdJz2SQZiKdUErDgSdD7vcNu+dXg==}
     peerDependencies:
       vue: '>=3.5.2'
 
@@ -2007,11 +2010,9 @@ snapshots:
       path-browserify: 1.0.1
       vscode-uri: 3.1.0
 
-  '@vooya/build-core@0.1.0-beta.0':
+  '@vooya/build-core@0.2.0-alpha.0':
     dependencies:
-      '@vooya/compiler': 0.1.0-beta.0
-      '@vooya/core': 0.1.0-beta.0
-      smol-toml: 1.8.0
+      '@vooya/provider-rust': 0.2.0-alpha.0
 
   '@vooya/compiler@0.1.0-beta.0':
     dependencies:
@@ -2020,14 +2021,20 @@ snapshots:
 
   '@vooya/core@0.1.0-beta.0': {}
 
-  '@vooya/vite@0.1.0-beta.2(vite@8.2.1(esbuild@0.28.1))':
+  '@vooya/provider-rust@0.2.0-alpha.0':
     dependencies:
-      '@vooya/build-core': 0.1.0-beta.0
+      '@vooya/compiler': 0.1.0-beta.0
+      '@vooya/core': 0.1.0-beta.0
+      smol-toml: 1.8.0
+
+  '@vooya/vite@0.2.0-alpha.0(vite@8.2.1(esbuild@0.28.1))':
+    dependencies:
+      '@vooya/build-core': 0.2.0-alpha.0
       '@vooya/compiler': 0.1.0-beta.0
       '@vooya/core': 0.1.0-beta.0
       vite: 8.2.1(esbuild@0.28.1)
 
-  '@vooya/vue@0.1.0-beta.1(vue@3.5.41(typescript@5.9.3))':
+  '@vooya/vue@0.2.0-alpha.0(vue@3.5.41(typescript@5.9.3))':
     dependencies:
       vue: 3.5.41(typescript@5.9.3)
 

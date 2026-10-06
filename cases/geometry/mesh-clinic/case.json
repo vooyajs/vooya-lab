@@ -17,7 +17,7 @@
   "distribution": {
     "mode": "demo-only",
     "files": ["./src/MeshClinic.rs", "./src/MeshClinic.css", "./DemoPage.vue", "./sourceFiles.ts", "./index.ts"],
-    "dependencies": ["tobj = 4.0.5", "@vooya/vue = 0.1.0-alpha.10"]
+    "dependencies": ["tobj = 4.0.5", "@vooya/vue = 0.2.0-alpha.0"]
   },
   "proof": {
     "hostOwns": ["specimen and repair controls", "accessible metrics and explanation", "SVG diagnostic renderer", "gallery lifecycle"],

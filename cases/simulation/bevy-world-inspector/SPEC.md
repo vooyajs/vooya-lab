@@ -106,7 +106,7 @@ compute or a spatial broad phase, but that is a different measured boundary.
 ## Distribution
 
 - Exported files: those listed in `case.json`.
-- npm packages: `@vooya/vue = 0.1.0-alpha.10`.
+- npm packages: `@vooya/vue = 0.2.0-alpha.0`.
 - Rust crates/features: `bevy_ecs = 0.18.1`, no default features, `std` only;
   coordinated `vooya` runtime.
 - Cargo/TypeScript changes: the Lab root currently owns dependency aggregation;

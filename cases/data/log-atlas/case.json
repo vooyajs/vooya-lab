@@ -20,7 +20,7 @@
   "distribution": {
     "mode": "demo-only",
     "files": ["./src/LogAtlas.rs", "./src/LogAtlas.css", "./DemoPage.vue", "./sourceFiles.ts", "./index.ts"],
-    "dependencies": ["regex = 1.12.2", "@vooya/vue = 0.1.0-alpha.10"]
+    "dependencies": ["regex = 1.12.2", "@vooya/vue = 0.2.0-alpha.0"]
   },
   "proof": {
     "hostOwns": ["query and time-window controls", "accessible explanation", "gallery page state"],
