@@ -20,7 +20,7 @@
     "@vooya-lab/preview-host": "workspace:*",
     "@vooya-lab/runtime-module": "workspace:*",
     "@vooya-lab/runtime-wasi": "workspace:*",
-    "@vooya/vue": "0.1.0-beta.1",
+    "@vooya/vue": "0.2.0-alpha.0",
     "path-browserify": "1.0.1",
     "vue": "3.5.41",
     "vue-router": "4.5.1"
@@ -28,7 +28,7 @@
   "devDependencies": {
     "@playwright/test": "1.55.0",
     "@vitejs/plugin-vue": "6.0.1",
-    "@vooya/vite": "0.1.0-beta.2",
+    "@vooya/vite": "0.2.0-alpha.0",
     "typescript": "5.9.3",
     "vite": "8.2.1",
     "vue-tsc": "3.0.6"

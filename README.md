@@ -52,12 +52,16 @@ experiments to routes such as `/bundlers/rspack`.
 
 ## Local development
 
-The first cases use the published coordinated Vooya alpha packages. Source
-authoring also requires Cargo, the `wasm32-unknown-unknown` target, and the
-matching `wasm-bindgen` CLI.
+The Lab pins the published `@vooya/vite` and `@vooya/vue` packages to
+`0.2.0-alpha.0`. Their Rust provider/build facade are alpha.0 while compiler/core
+remain beta.0; the lockfile preserves this exact dependency graph. Vite itself
+is `8.2.1`. Source authoring requires Cargo, the `wasm32-unknown-unknown` target
+and `wasm-bindgen-cli` `0.2.115`. No optional managed preset is enabled here.
+The separately pinned browser-compiler research assets are unchanged.
 
 ```sh
-pnpm install
+pnpm install --frozen-lockfile
+pnpm verify:vooya-registry
 pnpm dev
 ```
 

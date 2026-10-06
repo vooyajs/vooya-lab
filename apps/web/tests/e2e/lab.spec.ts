@@ -12,6 +12,7 @@ test("home page presents the generated case library and portfolio", async ({ pag
 });
 
 test("a cold case route renders a stable preview loader before its module arrives", async ({ page }) => {
+  test.skip(process.env.LAB_E2E_MODE === "production", "Source-module interception is only available in development.");
   let releaseModule!: () => void;
   const moduleGate = new Promise<void>((resolve) => { releaseModule = resolve; });
   await page.route("**/cases/state/workflow-replay/DemoPage.vue*", async (route) => {

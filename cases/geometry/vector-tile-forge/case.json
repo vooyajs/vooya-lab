@@ -17,7 +17,7 @@
   "distribution": {
     "mode": "demo-only",
     "files": ["./src/VectorTileForge.rs", "./src/VectorTileForge.css", "./DemoPage.vue", "./sourceFiles.ts", "./index.ts"],
-    "dependencies": ["geo = 0.33.1", "geojson = 1.0.0", "earcutr = 0.5.0", "@vooya/vue = 0.1.0-alpha.10"]
+    "dependencies": ["geo = 0.33.1", "geojson = 1.0.0", "earcutr = 0.5.0", "@vooya/vue = 0.2.0-alpha.0"]
   },
   "proof": {
     "hostOwns": ["tolerance and overlay controls", "map labels and accessible explanation", "SVG presentation", "future WebGPU renderer lifecycle"],

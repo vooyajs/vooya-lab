@@ -17,7 +17,7 @@
   "distribution": {
     "mode": "demo-only",
     "files": ["./src/SourceSurgeon.rs", "./src/SourceSurgeon.css", "./DemoPage.vue", "./sourceFiles.ts", "./index.ts"],
-    "dependencies": ["syn = 3.0.4", "prettyplease = 0.3.0", "@vooya/vue = 0.1.0-alpha.10"]
+    "dependencies": ["syn = 3.0.4", "prettyplease = 0.3.0", "@vooya/vue = 0.2.0-alpha.0"]
   },
   "proof": {
     "hostOwns": ["draft textarea", "keyboard and focus behavior", "analyze and reset controls", "source Workbench and copy action"],

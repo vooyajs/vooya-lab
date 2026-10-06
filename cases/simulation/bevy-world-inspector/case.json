@@ -20,7 +20,7 @@
   "distribution": {
     "mode": "demo-only",
     "files": ["./src/BevyWorld.rs", "./src/BevyWorld.css", "./DemoPage.vue", "./sourceFiles.ts", "./index.ts"],
-    "dependencies": ["@vooya/vue = 0.1.0-alpha.10", "bevy_ecs = 0.18.1 (default-features = false, features = [std])", "vooya = coordinated workspace runtime"]
+    "dependencies": ["@vooya/vue = 0.2.0-alpha.0", "bevy_ecs = 0.18.1 (default-features = false, features = [std])", "vooya = coordinated workspace runtime"]
   },
   "proof": {
     "hostOwns": ["playback timing and accessible controls", "DOM world projection and entity inspector", "responsive product layout"],

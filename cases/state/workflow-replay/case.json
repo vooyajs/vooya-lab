@@ -20,7 +20,7 @@
   "distribution": {
     "mode": "demo-only",
     "files": ["./src/WorkflowReplay.rs", "./src/WorkflowReplay.css", "./DemoPage.vue", "./sourceFiles.ts", "./index.ts"],
-    "dependencies": ["@vooya/vue = 0.1.0-beta.1", "@vooya/vite = 0.1.0-beta.2 (build)", "vooya = coordinated workspace runtime"]
+    "dependencies": ["@vooya/vue = 0.2.0-alpha.0", "@vooya/vite = 0.2.0-alpha.0 (build)", "vooya = coordinated workspace runtime"]
   },
   "proof": {
     "hostOwns": ["accessible workflow controls", "timeline and ledger DOM", "responsive product layout"],

@@ -8,6 +8,7 @@
     "dev": "pnpm --filter @vooya-lab/web dev",
     "build": "pnpm --filter @vooya-lab/web build",
     "build:pages": "pnpm build && node scripts/prepare-pages.mjs",
+    "verify:vooya-registry": "node scripts/verify-vooya-registry.mjs",
     "validate:cases": "node scripts/validate-cases.mjs",
     "typecheck": "pnpm --filter @vooya-lab/web typecheck",
     "test:e2e": "pnpm --filter @vooya-lab/web test:e2e",
