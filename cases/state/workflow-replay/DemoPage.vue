@@ -124,7 +124,7 @@ function resetWorkflow() {
       </CaseLiveWorkbench>
       <div class="under-preview">
         <p><b>No reducer benchmark.</b> The proof is that a domain Store already written and tested in Rust can retain its invariants while the host framework keeps full ownership of product UI.</p>
-        <div><a href="https://github.com/vooyajs/vooya/issues/105" target="_blank" rel="noreferrer">Snapshot typing gap #105 ↗</a><a href="https://github.com/vooyajs/vooya-lab/tree/main/cases/state/workflow-replay" target="_blank" rel="noreferrer">View repository ↗</a></div>
+        <div><a href="https://github.com/vooyajs/vooya/issues/105" target="_blank" rel="noreferrer">Generated snapshot types #105 (resolved) ↗</a><a href="https://github.com/vooyajs/vooya-lab/tree/main/cases/state/workflow-replay" target="_blank" rel="noreferrer">View repository ↗</a></div>
       </div>
 
       <div class="case-section-title"><span>02 — Why this boundary?</span><span>DOMAIN RULES · HOST UI</span></div>
@@ -140,7 +140,7 @@ function resetWorkflow() {
 
       <section class="case-notes">
         <div><span>WHAT THIS PROVES</span><p>A generated, instance-scoped Rust Store owns transitions, history, cursor movement, rejected actions, cached snapshots, subscription, and disposal while Vue renders ordinary accessible DOM.</p></div>
-        <div><span>WHAT COMES NEXT</span><p>Concrete generated snapshot types are tracked in Core #105. React parity and a packed precompiled Store contract are required before this becomes a genuinely portable copy-and-use case.</p></div>
+        <div><span>WHAT COMES NEXT</span><p>Concrete snapshot types and the Vue hook are generated for this case. React host parity and consumption of one packed precompiled Store artifact without Rust tooling are still required before this becomes a portable copy-and-use case.</p></div>
       </section>
     </div>
   </article>
